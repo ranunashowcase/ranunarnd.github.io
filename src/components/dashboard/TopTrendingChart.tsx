@@ -9,7 +9,7 @@ export default function TopTrendingChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/ai/trends-today')
+    fetch(`/api/ai/trends-today?t=${Date.now()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {

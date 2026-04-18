@@ -13,7 +13,7 @@ export default function AiTrendCard() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/ai/trends-today');
+      const res = await fetch(`/api/ai/trends-today?t=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
