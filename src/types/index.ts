@@ -7,7 +7,7 @@ import { z } from 'zod';
 export const ProductSchema = z.object({
   product_name: z.string().min(1, 'Nama produk wajib diisi'),
   variant: z.string().optional().default(''),
-  status: z.enum(['live', 'development'], { required_error: 'Status wajib dipilih' }),
+  status: z.enum(['live', 'development'], { message: 'Status wajib dipilih' }),
   category: z.string().min(1, 'Kategori wajib diisi'),
   nutrition_highlight: z.string().optional().default(''),
   cogs: z.coerce.number().min(0, 'COGS harus angka positif'),
@@ -17,14 +17,12 @@ export const TrendSchema = z.object({
   trend_name: z.string().min(1, 'Nama tren wajib diisi'),
   target_market: z.string().min(1, 'Target market wajib diisi'),
   competitor_price: z.coerce.number().min(0, 'Harga kompetitor harus angka positif'),
-  trend_status: z.enum(['naik', 'turun', 'stabil'], { required_error: 'Status tren wajib dipilih' }),
+  trend_status: z.enum(['naik', 'turun', 'stabil'], { message: 'Status tren wajib dipilih' }),
 });
 
 export const PackagingSchema = z.object({
   target_product: z.string().min(1, 'Target produk wajib diisi'),
-  packaging_type: z.enum(['Standing Pouch', 'Box', 'Jar', 'Sachet', 'Lainnya'], {
-    required_error: 'Tipe packaging wajib dipilih',
-  }),
+  packaging_type: z.enum(['Standing Pouch', 'Box', 'Jar', 'Sachet', 'Lainnya'], { message: 'Tipe packaging wajib dipilih' }),
   material_specs: z.string().min(1, 'Spesifikasi material wajib diisi'),
   current_trend: z.string().optional().default(''),
   visual_reference_url: z.string().url('URL harus valid').optional().or(z.literal('')).default(''),

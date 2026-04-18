@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import { InputInformation } from '@/types';
-const pdfParse = require('pdf-parse');
 
 const SHEET_NAME = 'INPUT INFORMASI';
 const HEADERS = ['info_id', 'judul', 'kategori_info', 'sumber', 'konten', 'created_at'];
@@ -43,6 +42,7 @@ export async function POST(request: NextRequest) {
           const bytes = await file.arrayBuffer();
           const buffer = Buffer.from(bytes);
           try {
+            const pdfParse = require('pdf-parse');
             const data = await pdfParse(buffer);
             konten = data.text;
             sumber = 'PDF Upload';
