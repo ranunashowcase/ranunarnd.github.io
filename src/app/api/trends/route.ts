@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key' });
 
 const SHEET_NAME = 'MarketTrends';
 const HEADERS = ['trend_id', 'trend_name', 'target_market', 'competitor_price', 'trend_status', 'estimasi_durasi', 'created_at'];

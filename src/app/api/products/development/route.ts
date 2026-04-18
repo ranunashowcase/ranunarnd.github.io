@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { appendSheetData, initializeSheetHeaders, getCurrentTimestamp } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key' });
 
 export async function POST(req: Request) {
   try {
