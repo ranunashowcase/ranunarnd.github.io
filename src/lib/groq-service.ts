@@ -37,14 +37,15 @@ export async function generateGroqCompletion(prompt: string, systemMessage?: str
  * Helper function for high-reasoning tasks using "openai/gpt-oss-120b"
  */
 export async function generateDeepThinkingCompletion(prompt: string, systemMessage?: string) {
+  const messages: any[] = [];
+  
+  if (systemMessage) {
+    messages.push({ role: 'system', content: systemMessage });
+  }
+  
+  messages.push({ role: 'user', content: prompt });
+
   try {
-    const messages: any[] = [];
-    
-    if (systemMessage) {
-      messages.push({ role: 'system', content: systemMessage });
-    }
-    
-    messages.push({ role: 'user', content: prompt });
 
     const completion = await groq.chat.completions.create({
       model: 'openai/gpt-oss-120b',

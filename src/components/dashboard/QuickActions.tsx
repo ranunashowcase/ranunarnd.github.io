@@ -8,8 +8,22 @@ interface QuickActionModalProps {
   onClose: () => void;
 }
 
+interface Field {
+  name: string;
+  label: string;
+  type: string;
+  required: boolean;
+  options?: string[];
+}
+
+interface ActionConfig {
+  title: string;
+  endpoint: string;
+  fields: Field[];
+}
+
 function QuickActionModal({ type, onClose }: QuickActionModalProps) {
-  const config = {
+  const config: Record<'trending' | 'live-sku' | 'on-develop', ActionConfig> = {
     trending: {
       title: 'Tambah Produk Trending',
       endpoint: '/api/products/market-watch',
