@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { generateGroqCompletion, generateDeepThinkingCompletion } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
@@ -72,3 +73,4 @@ ${distilledContext}
     return NextResponse.json({ success: false, error: 'Gagal menghubungi AI' }, { status: 500 });
   }
 }
+

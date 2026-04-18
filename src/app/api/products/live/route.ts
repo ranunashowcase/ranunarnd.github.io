@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { appendSheetData } from '@/lib/sheets-service';
 
@@ -25,3 +26,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

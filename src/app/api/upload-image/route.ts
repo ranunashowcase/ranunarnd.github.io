@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
@@ -30,3 +31,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Gagal mengupload file' }, { status: 500 });
   }
 }
+

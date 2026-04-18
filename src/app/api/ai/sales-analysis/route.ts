@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion } from '@/lib/groq-service';
 
@@ -36,3 +37,4 @@ ${JSON.stringify(topProducts, null, 2)}`;
     );
   }
 }
+

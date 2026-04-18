@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import { PackagingSchema, PackagingAnalysis } from '@/types';
@@ -68,3 +69,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

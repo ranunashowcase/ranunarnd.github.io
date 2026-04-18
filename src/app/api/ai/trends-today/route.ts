@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion, generateDeepThinkingCompletion } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
@@ -97,3 +98,4 @@ Berikan 5 produk trending. Skor trend dari 1-100. IMPORTANT: RETURN ONLY JSON, D
     );
   }
 }
+

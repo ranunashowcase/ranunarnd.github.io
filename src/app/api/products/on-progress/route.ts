@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, updateSheetRow, deleteSheetRow, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import { OnProgressProduct } from '@/types';
@@ -202,3 +203,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Gagal menghapus data' }, { status: 500 });
   }
 }
+

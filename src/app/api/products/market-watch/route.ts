@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse, NextRequest } from 'next/server';
 import { appendSheetData, getSheetData, deleteSheetRow, initializeSheetHeaders, getCurrentTimestamp } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
@@ -199,3 +200,4 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Gagal menghapus data' }, { status: 500 });
   }
 }
+

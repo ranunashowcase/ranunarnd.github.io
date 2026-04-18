@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
@@ -114,3 +115,4 @@ Jawab HANYA dengan format JSON tanpa awalan/akhiran apapun:
     );
   }
 }
+

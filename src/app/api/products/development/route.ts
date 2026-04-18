@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { appendSheetData, initializeSheetHeaders, getCurrentTimestamp } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
@@ -82,3 +83,4 @@ Jelaskan jawaban secara ringkas maksimal 2 paragraf. Di baris paling bawah, beri
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion } from '@/lib/groq-service';
 
@@ -34,3 +35,4 @@ Example format:
     return NextResponse.json({ success: false, error: 'Gagal mengambil data AI' }, { status: 500 });
   }
 }
+

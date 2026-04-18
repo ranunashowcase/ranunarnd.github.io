@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getSheetData, initializeSheetHeaders } from '@/lib/sheets-service';
 
@@ -133,3 +134,4 @@ export async function GET() {
     );
   }
 }
+

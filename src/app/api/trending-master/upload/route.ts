@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getGoogleSheetsClient, getSpreadsheetId } from '@/lib/google-sheets';
 import * as xlsx from 'xlsx';
@@ -67,3 +68,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Gagal memproses file' }, { status: 500 });
   }
 }
+
