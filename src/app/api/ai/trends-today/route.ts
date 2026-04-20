@@ -1,81 +1,64 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Allow up to 60s for AI processing on Vercel
+export const maxDuration = 10; // Vercel Hobby plan limit
 
 import { NextResponse } from 'next/server';
-import { generateGroqCompletion, generateDeepThinkingCompletion } from '@/lib/groq-service';
+import { generateGroqCompletion } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
 import { InputInformation } from '@/types';
 
 export async function GET() {
   try {
-    // Fetch INPUT INFORMASI for enriched context
+    // Fetch context data in PARALLEL for speed
+    const [infoResult, trendResult] = await Promise.allSettled([
+      getSheetData<InputInformation>('INPUT INFORMASI'),
+      getSheetData<Record<string, string>>('Trending Master'),
+    ]);
+
+    // Build compact context strings
     let infoContext = '';
-    try {
-      const infoData = await getSheetData<InputInformation>('INPUT INFORMASI');
-      if (infoData.length > 0) {
-        // Take last 5 entries for context
-        const recentInfo = infoData.slice(-5);
-        infoContext = `\n\nData riset terbaru yang sudah diinput tim R&D:\n${recentInfo.map((i) =>
-          `- [${i.kategori_info}] ${i.judul}: ${i.konten.substring(0, 500)}`
-        ).join('\n')}`;
-      }
-    } catch {
-      // No info data yet
+    if (infoResult.status === 'fulfilled' && infoResult.value.length > 0) {
+      const recentInfo = infoResult.value.slice(-3); // Reduced from 5 to 3 for speed
+      infoContext = recentInfo.map((i) =>
+        `[${i.kategori_info}] ${i.judul}: ${i.konten.substring(0, 300)}`
+      ).join('\n');
     }
 
-    // Fetch Trending Master data for context
     let trendingContext = '';
-    try {
-      const trendData = await getSheetData<Record<string, string>>('Trending Master');
-      if (trendData.length > 0) {
-        trendingContext = `\n\nData trending master yang sudah dicatat:\n${trendData.slice(-5).map((t) =>
-          `- ${t.product_name || t.nama_produk}: skor ${t.trend_score || 'N/A'}, durasi ${t.estimated_duration || 'N/A'}`
-        ).join('\n')}`;
-      }
-    } catch {
-      // No trending data yet
+    if (trendResult.status === 'fulfilled' && trendResult.value.length > 0) {
+      trendingContext = trendResult.value.slice(-3).map((t) =>
+        `${t.product_name || t.nama_produk}: skor ${t.trend_score || 'N/A'}`
+      ).join(', ');
     }
 
-    // PAIRING STAGE 1: Llama-3.1-8b untuk mem-filter dan merangkum raw data
-    let distilledContext = '';
-    if (infoContext || trendingContext) {
-      const summaryPrompt = `Ekstrak dan rangkum data tren pasar mentah berikut menjadi poin-poin wawasan yang tajam untuk industri Natural & Healthy Food:\n${infoContext}\n${trendingContext}`;
-      try {
-        distilledContext = await generateGroqCompletion(summaryPrompt, "Anda adalah AI Market Summarizer.");
-      } catch (err) {
-        distilledContext = `${infoContext}\n${trendingContext}`;
-      }
-    }
+    // SINGLE AI call (no more dual-pairing to avoid timeout)
+    const systemPrompt = `Anda AI Market Intelligence Analyst khusus Natural & Healthy Food Indonesia.
+Berikan analisis SPESIFIK produk natural & healthy yang TRENDING di marketplace Indonesia (Shopee, Tokopedia, TikTok Shop).
+JANGAN tren umum. Berikan NAMA PRODUK SPESIFIK.
+${infoContext ? `\nKonteks riset: ${infoContext}` : ''}
+${trendingContext ? `\nTrending: ${trendingContext}` : ''}
 
-    const systemPrompt = `Anda adalah AI Market Intelligence Analyst khusus untuk produk Natural & Healthy Food di Indonesia.
-Tugas Anda memberikan analisis SPESIFIK tentang produk natural & healthy yang BENAR-BENAR sedang trending dan bisa ditemukan di marketplace Indonesia (Shopee, Tokopedia, TikTok Shop).
-
-JANGAN berikan tren umum. Berikan NAMA PRODUK SPESIFIK yang bisa dicari di marketplace.
-Konteks Riset Terverifikasi:
-${distilledContext}
-
-Format response sebagai JSON (tanpa markdown code blocks):
+Format JSON (tanpa markdown code blocks):
 {
   "products": [
     {
-      "nama_produk": "Nama produk spesifik yang bisa dicari di marketplace",
+      "nama_produk": "Nama spesifik",
       "marketplace": "Shopee/Tokopedia/TikTok Shop",
-      "alasan_trending": "Kenapa produk ini trending - 1-2 kalimat",
-      "estimasi_durasi": "3-6 Bulan / Evergreen / dll",
+      "alasan_trending": "1-2 kalimat",
+      "estimasi_durasi": "3-6 Bulan / Evergreen",
       "rekomendasi": "Worth it / Risky / Saturated",
       "skor_trend": 85
     }
   ],
-  "insight_utama": "Insight kunci untuk tim R&D dalam 2-3 kalimat",
-  "rekomendasi_bisnis": "Rekomendasi aksi bisnis konkret untuk tim R&D"
+  "insight_utama": "Insight kunci 1-2 kalimat",
+  "rekomendasi_bisnis": "Rekomendasi aksi konkret 1-2 kalimat"
 }
 
-Berikan 5 produk trending. Skor trend dari 1-100. IMPORTANT: RETURN ONLY JSON, DO NOT RETURN ANY THINKING TEXT OR MARKDOWN BLOCKS.`;
+Berikan 5 produk. Skor 1-100. RETURN ONLY JSON.`;
 
-    const userPrompt = 'Berikan analisis produk natural & healthy food yang sedang trending di marketplace Indonesia hari ini. Output HANYA JSON.';
-
-    // PAIRING STAGE 2: Deep Thinking untuk analisis tajam dan JSON formatting
-    const resultString = await generateDeepThinkingCompletion(userPrompt, systemPrompt);
+    const resultString = await generateGroqCompletion(
+      'Analisis produk natural & healthy food trending di marketplace Indonesia. Output HANYA JSON.',
+      systemPrompt
+    );
 
     try {
       const startIdx = resultString.indexOf('{');
@@ -100,4 +83,3 @@ Berikan 5 produk trending. Skor trend dari 1-100. IMPORTANT: RETURN ONLY JSON, D
     );
   }
 }
-

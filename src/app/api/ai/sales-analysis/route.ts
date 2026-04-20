@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 10;
 
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion } from '@/lib/groq-service';
