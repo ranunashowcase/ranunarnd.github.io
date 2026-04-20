@@ -85,13 +85,13 @@ export default function TrendViralPage() {
             Pantau produk & packaging pesaing yang sedang viral — dianalisis AI secara otomatis.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 overflow-x-auto hide-scrollbar whitespace-nowrap w-full sm:w-auto">
             {['All', 'Trend Produk', 'Trend Packaging Unik'].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex-shrink-0 ${
                   filter === f
                     ? 'bg-brand-primary text-white shadow-md'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
@@ -198,10 +198,10 @@ export default function TrendViralPage() {
                   {/* Right: Content Block */}
                   <div className="flex-1 flex flex-col min-w-0 justify-between">
                     <div>
-                      <h2 className="text-3xl font-black text-gray-900 leading-tight mb-6">{item.nama_produk}</h2>
+                      <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight mb-6">{item.nama_produk}</h2>
 
                       {/* Quick Info Grid */}
-                      <div className="grid grid-cols-2 gap-4 mb-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                           <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400 mb-1 flex items-center gap-1.5"><Box className="w-3.5 h-3.5"/> Ukuran Granulasi</p>
                           <p className="text-base font-bold text-gray-900">{item.ukuran_gramasi || '-'}</p>
@@ -308,11 +308,11 @@ export default function TrendViralPage() {
                             : 'bg-white text-gray-700 border-gray-100 hover:border-brand-primary/30 hover:bg-gray-50'
                         }`}
                       >
-                        <span className="flex items-center gap-3">
-                          <div className={`p-1.5 rounded-lg transition-colors ${isExpanded ? 'bg-white/20' : 'bg-brand-accent/10 text-brand-accent group-hover:bg-brand-accent/20'}`}>
+                        <span className="flex items-center gap-3 text-left">
+                          <div className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${isExpanded ? 'bg-white/20' : 'bg-brand-accent/10 text-brand-accent group-hover:bg-brand-accent/20'}`}>
                             <BrainCircuit className="w-5 h-5" />
                           </div>
-                          Buka Detail Riset Pasar & Rekomendasi R&D
+                          <span className="leading-tight">Buka Detail Riset Pasar & Rekomendasi R&D</span>
                         </span>
                         <span className={`text-sm transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
                       </button>

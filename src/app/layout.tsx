@@ -21,8 +21,8 @@ export default function RootLayout({
         <ToastProvider>
           <div className="flex min-h-screen">
             <Sidebar />
-            <main className="flex-1 ml-[260px] transition-all duration-300">
-              <div className="max-w-7xl mx-auto px-6 py-8">
+            <main className="flex-1 ml-0 md:ml-[260px] w-full transition-all duration-300">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-8">
                 {children}
               </div>
             </main>

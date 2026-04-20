@@ -51,7 +51,7 @@ export default function TrendsTodayPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Trend Hari Ini</h1>
           <p className="text-sm text-gray-400 mt-1">
@@ -59,7 +59,7 @@ export default function TrendsTodayPage() {
             {' '} — Powered by AI
           </p>
         </div>
-        <button onClick={fetchAll} className="btn-ghost">
+        <button onClick={fetchAll} className="btn-ghost self-start sm:self-auto">
           <RefreshCw className="w-4 h-4" />
           Refresh
         </button>
@@ -70,8 +70,8 @@ export default function TrendsTodayPage() {
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full -translate-y-40 translate-x-40 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-indigo-500/10 rounded-full translate-y-30 -translate-x-20 blur-3xl" />
 
-        <div className="p-8 relative z-10">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="p-5 md:p-8 relative z-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
             <div className="p-3 bg-white/10 rounded-xl">
               <Sparkles className="w-6 h-6 text-amber-400" />
             </div>
@@ -159,7 +159,7 @@ export default function TrendsTodayPage() {
 
       {/* Trending Master Data (Bar Graph) */}
       <section className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div className="p-5 md:p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-brand-primary/10">
               <TrendingUp className="w-5 h-5 text-brand-primary" />

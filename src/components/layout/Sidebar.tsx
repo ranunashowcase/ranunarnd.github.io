@@ -13,8 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Leaf,
+  Menu,
+  X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -30,26 +32,60 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on path change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0f2419] via-[#1B4332] to-[#143327] text-white shadow-sidebar z-40',
-        'flex flex-col transition-all duration-300 ease-in-out custom-scrollbar',
-        collapsed ? 'w-[72px]' : 'w-[260px]'
+    <>
+      {/* Mobile Toggle Button */}
+      <button 
+        onClick={() => setMobileMenuOpen(true)}
+        className="md:hidden fixed top-4 right-4 z-[45] p-2 bg-white text-brand-primary rounded-xl shadow-md border border-gray-100 flex items-center justify-center"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
+      {/* Screen Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity"
+          onClick={() => setMobileMenuOpen(false)}
+        />
       )}
-    >
-      {/* Logo Section */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-accent/20 flex-shrink-0 shadow-lg shadow-brand-accent/10">
-          <Leaf className="w-6 h-6 text-brand-accent" />
-        </div>
-        {!collapsed && (
-          <div className="animate-fade-in">
-            <h1 className="text-base font-bold tracking-tight">SBJ R&D</h1>
-            <p className="text-[11px] text-white/40 font-medium">Intelligence System</p>
-          </div>
+
+      <aside
+        className={cn(
+          'fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0f2419] via-[#1B4332] to-[#143327] text-white shadow-sidebar z-50',
+          'flex flex-col transition-all duration-300 ease-in-out custom-scrollbar',
+          !mobileMenuOpen ? '-translate-x-full md:translate-x-0' : 'translate-x-0',
+          collapsed ? 'md:w-[72px] w-[260px]' : 'w-[260px]'
         )}
+      >
+      {/* Logo Section */}
+      <div className="flex items-center justify-between px-5 py-6 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-accent/20 flex-shrink-0 shadow-lg shadow-brand-accent/10">
+            <Leaf className="w-6 h-6 text-brand-accent" />
+          </div>
+          {!collapsed && (
+            <div className="animate-fade-in">
+              <h1 className="text-base font-bold tracking-tight">SBJ R&D</h1>
+              <p className="text-[11px] text-white/40 font-medium">Intelligence System</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Mobile close button */}
+        <button 
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden p-2 text-white/50 hover:text-white rounded-lg transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -105,12 +141,13 @@ export default function Sidebar() {
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-white/40 hover:text-white hover:bg-white/6 transition-all duration-200 text-sm"
+          className="hidden md:flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-white/40 hover:text-white hover:bg-white/6 transition-all duration-200 text-sm"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           {!collapsed && <span className="text-xs">Tutup Sidebar</span>}
         </button>
       </div>
     </aside>
+    </>
   );
 }
