@@ -34,7 +34,13 @@ export async function generateGroqCompletion(prompt: string, systemMessage?: str
 }
 
 /**
- * Helper function for high-reasoning tasks using "openai/gpt-oss-120b"
+ * Helper function for high-reasoning tasks.
+ * Uses a tiered fallback strategy optimized for Vercel serverless:
+ * 1. Try llama-3.3-70b-versatile (fast, reliable, good reasoning)
+ * 2. Fallback to llama-3.1-8b-instant (ultra-fast) if 70b fails
+ * 
+ * Note: openai/gpt-oss-120b was removed because it's too slow for
+ * Vercel serverless timeouts and frequently hits Groq TPM rate limits.
  */
 export async function generateDeepThinkingCompletion(prompt: string, systemMessage?: string) {
   const messages: any[] = [];
@@ -46,30 +52,32 @@ export async function generateDeepThinkingCompletion(prompt: string, systemMessa
   messages.push({ role: 'user', content: prompt });
 
   try {
-
+    // Primary: Llama 3.3 70B — excellent reasoning, fast enough for serverless
     const completion = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-120b',
+      model: 'llama-3.3-70b-versatile',
       messages,
       temperature: 0.2, // Very low temperature for highly accurate analytical output
-      max_completion_tokens: 1500, // Reduced further to prevent frequent Groq TPM rate limits on massive models
+      max_tokens: 1500,
       top_p: 0.9,
-      // @ts-ignore
-      reasoning_effort: 'high',
-      stream: false,
-    } as any);
+    });
 
     return completion.choices[0]?.message?.content || '';
   } catch (error) {
-    console.error('Groq Deep Thinking Error (Trying fallback to Llama 70b):', error);
+    console.error('Groq Deep Thinking Error (Trying fallback to Llama 8b):', error);
     
-    // Fallback if GPT-OSS-120B hits rate limit or isn't available
-    const fallback = await groq.chat.completions.create({
-       model: 'llama-3.3-70b-versatile',
-       messages,
-       temperature: 0.2,
-       max_completion_tokens: 1500,
-    } as any);
+    // Fallback: Llama 3.1 8B Instant — ultra fast, still capable
+    try {
+      const fallback = await groq.chat.completions.create({
+        model: 'llama-3.1-8b-instant',
+        messages,
+        temperature: 0.2,
+        max_tokens: 1500,
+      });
 
-    return fallback.choices[0]?.message?.content || '';
+      return fallback.choices[0]?.message?.content || '';
+    } catch (fallbackError) {
+      console.error('All Groq models failed:', fallbackError);
+      throw new Error('Gagal menghubungi AI Server - semua model tidak tersedia');
+    }
   }
 }

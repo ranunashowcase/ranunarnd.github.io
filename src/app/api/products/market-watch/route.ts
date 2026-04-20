@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 import { NextResponse, NextRequest } from 'next/server';
 import { appendSheetData, getSheetData, deleteSheetRow, initializeSheetHeaders, getCurrentTimestamp } from '@/lib/sheets-service';
 import Groq from 'groq-sdk';
