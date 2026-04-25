@@ -7,7 +7,8 @@ export const groq = new Groq({
 });
 
 /**
- * Helper function to generate an ai response using mixtral or llama
+ * Helper function to generate an AI response.
+ * Uses llama-3.3-70b-versatile for best quality + speed balance.
  */
 export async function generateGroqCompletion(prompt: string, systemMessage?: string) {
   try {
@@ -21,9 +22,9 @@ export async function generateGroqCompletion(prompt: string, systemMessage?: str
 
     const completion = await groq.chat.completions.create({
       messages,
-      model: 'llama-3.3-70b-versatile', // Upgraded for high reasoning accuracy
-      temperature: 0.3, // Lower temp for more precision, less hallucination
-      max_tokens: 1024,
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 1500, // Increased from 1024 for richer answers
     });
 
     return completion.choices[0]?.message?.content || '';
@@ -38,9 +39,6 @@ export async function generateGroqCompletion(prompt: string, systemMessage?: str
  * Uses a tiered fallback strategy optimized for Vercel serverless:
  * 1. Try llama-3.3-70b-versatile (fast, reliable, good reasoning)
  * 2. Fallback to llama-3.1-8b-instant (ultra-fast) if 70b fails
- * 
- * Note: openai/gpt-oss-120b was removed because it's too slow for
- * Vercel serverless timeouts and frequently hits Groq TPM rate limits.
  */
 export async function generateDeepThinkingCompletion(prompt: string, systemMessage?: string) {
   const messages: any[] = [];
@@ -56,8 +54,8 @@ export async function generateDeepThinkingCompletion(prompt: string, systemMessa
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       messages,
-      temperature: 0.2, // Very low temperature for highly accurate analytical output
-      max_tokens: 1500,
+      temperature: 0.2,
+      max_tokens: 2000, // Increased from 1500 for deep analysis
       top_p: 0.9,
     });
 
@@ -71,7 +69,7 @@ export async function generateDeepThinkingCompletion(prompt: string, systemMessa
         model: 'llama-3.1-8b-instant',
         messages,
         temperature: 0.2,
-        max_tokens: 1500,
+        max_tokens: 2000,
       });
 
       return fallback.choices[0]?.message?.content || '';
