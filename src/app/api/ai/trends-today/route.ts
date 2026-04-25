@@ -92,8 +92,12 @@ export async function GET() {
     // ====================================================
     const systemPrompt = `Anda AI Market Intelligence Analyst EKSKLUSIF untuk PT. Shalee Berkah Jaya (Natural & Healthy Food: kurma, kacang, trail mix, madu, dll).
 
-TUGAS: Analisis produk natural & healthy yang TRENDING di marketplace Indonesia (Shopee, Tokopedia, TikTok Shop).
-JANGAN tren umum. Berikan NAMA PRODUK SPESIFIK yang bisa dikembangkan perusahaan.
+TUGAS: Berikan analisis trend KOMPREHENSIF yang mencakup:
+1. Inovasi dari produk yang SUDAH dimiliki perusahaan (varian baru, ukuran baru, bundling)
+2. Produk BARU yang sedang viral di TikTok, Instagram, dan media sosial lainnya
+3. Trend PACKAGING UNIK yang sedang ramai (standing pouch kreatif, jar premium, eco-friendly, dll)
+4. Trend dari PASAR GLOBAL (Amerika, Eropa, Korea, Jepang) yang bisa diadaptasi ke Indonesia
+5. Trend PASAR NASIONAL Indonesia terkini (makanan sehat, superfood, functional food)
 
 === DATA INTERNAL PERUSAHAAN ===
 ${skuContext || 'Belum ada data produk live.'}
@@ -104,30 +108,33 @@ ${infoContext ? `Riset terbaru:\n${infoContext}` : ''}
 === AKHIR DATA ===
 
 INSTRUKSI PENTING:
-- Rekomendasikan produk yang RELEVAN dengan bisnis perusahaan (natural & healthy food).
-- Bandingkan dengan produk yang sudah dijual perusahaan — apakah ada peluang yang belum digarap.
-- Jika ada produk yang sudah laris di data penjualan, rekomendasikan varian/ukuran baru.
+- JANGAN hanya rekomendasikan inovasi dari produk yang sudah ada. WAJIB campurkan dengan produk/konsep BARU.
+- Komposisi WAJIB: 2 inovasi produk existing + 2 produk baru viral medsos/global + 1 packaging trend + 2 trend pasar nasional/global.
+- Untuk produk baru, sebutkan NAMA SPESIFIK dan contoh brand/produk yang sudah ada di pasaran.
+- Untuk packaging trend, sebutkan material, bentuk, dan kenapa menarik konsumen.
+- Berikan insight yang ACTIONABLE — bukan hanya observasi.
 
 Format JSON (tanpa markdown code blocks):
 {
   "products": [
     {
-      "nama_produk": "Nama spesifik produk trending",
-      "marketplace": "Shopee/Tokopedia/TikTok Shop",
-      "alasan_trending": "1-2 kalimat kenapa trending, hubungkan dengan data perusahaan jika relevan",
-      "estimasi_durasi": "3-6 Bulan / Evergreen",
+      "nama_produk": "Nama spesifik produk/konsep trending",
+      "kategori": "Inovasi Produk Existing / Produk Baru Viral / Packaging Trend / Trend Global / Trend Nasional",
+      "marketplace": "TikTok Shop/Shopee/Tokopedia/Instagram/Global Market",
+      "alasan_trending": "2-3 kalimat kenapa trending — sertakan data spesifik (views, sales volume, growth) jika memungkinkan",
+      "estimasi_durasi": "3-6 Bulan / 1-2 Tahun / Evergreen",
       "rekomendasi": "Worth it / Risky / Saturated",
       "skor_trend": 85
     }
   ],
-  "insight_utama": "Insight kunci berdasarkan perbandingan data internal vs trend pasar",
-  "rekomendasi_bisnis": "Rekomendasi aksi konkret berdasarkan gap antara portofolio perusahaan dan peluang pasar"
+  "insight_utama": "Insight kunci: gabungan analisis data internal + trend medsos + trend global",
+  "rekomendasi_bisnis": "2-3 rekomendasi aksi konkret: produk baru yang harus di-develop, packaging yang harus diadopsi, dan peluang yang harus segera diambil"
 }
 
-Berikan 5 produk. Skor 1-100. RETURN ONLY JSON.`;
+Berikan 7 produk dengan komposisi seimbang. Skor 1-100. RETURN ONLY JSON.`;
 
     const resultString = await generateGroqCompletion(
-      'Analisis produk natural & healthy food trending di marketplace Indonesia berdasarkan data perusahaan dan trend pasar terkini. Output HANYA JSON.',
+      'Analisis komprehensif: (1) inovasi produk existing, (2) produk baru viral di medsos/TikTok, (3) packaging trend terbaru, (4) trend pasar global dan nasional untuk natural & healthy food. Output HANYA JSON.',
       systemPrompt
     );
 

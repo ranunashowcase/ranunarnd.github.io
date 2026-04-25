@@ -82,12 +82,24 @@ export default function AiTrendCard() {
             </div>
 
             {/* Products grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {data.products?.slice(0, 3).map((product, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {data.products?.slice(0, 7).map((product: any, i: number) => {
+                const kategori = product.kategori || '';
+                const badgeColor = kategori.includes('Existing') ? 'bg-emerald-500/20 text-emerald-300'
+                  : kategori.includes('Viral') ? 'bg-pink-500/20 text-pink-300'
+                  : kategori.includes('Packaging') ? 'bg-cyan-500/20 text-cyan-300'
+                  : kategori.includes('Global') ? 'bg-blue-500/20 text-blue-300'
+                  : 'bg-amber-500/20 text-amber-300';
+                return (
                 <div
                   key={i}
                   className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors"
                 >
+                  {kategori && (
+                    <span className={`inline-block text-[9px] font-semibold px-2 py-0.5 rounded-full mb-2 ${badgeColor}`}>
+                      {kategori}
+                    </span>
+                  )}
                   <div className="flex items-start gap-2 mb-2">
                     <ShoppingBag className="w-4 h-4 text-purple-300 mt-0.5 flex-shrink-0" />
                     <div>
@@ -107,7 +119,8 @@ export default function AiTrendCard() {
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Business recommendation */}
