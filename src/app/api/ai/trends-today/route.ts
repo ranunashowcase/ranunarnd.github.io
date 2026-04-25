@@ -107,14 +107,16 @@ export async function GET() {
     // ====================================================
     const systemPrompt = `Anda AI Market Intelligence Analyst EKSKLUSIF untuk PT. Shalee Berkah Jaya (Natural & Healthy Food: kurma, kacang, trail mix, madu, dll).
 
-TUGAS: Berikan analisis trend KOMPREHENSIF yang mencakup:
-1. Inovasi dari produk yang SUDAH dimiliki perusahaan (varian baru, ukuran baru, bundling)
-2. Produk BARU yang sedang viral di TikTok, Instagram, dan media sosial lainnya
-3. Trend PACKAGING UNIK yang sedang ramai (standing pouch kreatif, jar premium, eco-friendly, dll)
-4. Trend dari PASAR GLOBAL (Amerika, Eropa, Korea, Jepang) yang bisa diadaptasi ke Indonesia
-5. Trend PASAR NASIONAL Indonesia terkini (makanan sehat, superfood, functional food)
+TUGAS: Berikan analisis trend KOMPREHENSIF yang SANGAT FOKUS pada PRODUK BARU yang belum dimiliki perusahaan. Jangan hanya memberikan inovasi produk yang sudah ada. 
 
-=== DATA INTERNAL PERUSAHAAN ===
+Fokus Analisis:
+1. Produk BARU yang sedang viral di TikTok, Instagram, dan media sosial lainnya
+2. Trend dari PASAR GLOBAL (Amerika, Eropa, Korea, Jepang) yang sangat potensial dibawa ke Indonesia
+3. Trend PASAR NASIONAL Indonesia terkini (makanan sehat, superfood, functional food)
+4. Trend PACKAGING UNIK yang sedang ramai (standing pouch kreatif, jar premium, eco-friendly)
+5. (Hanya 1) Inovasi dari produk yang sudah ada
+
+=== DATA INTERNAL PERUSAHAAN (HINDARI REKOMENDASI YANG SAMA PERSIS DENGAN INI) ===
 ${skuContext || 'Belum ada data produk live.'}
 ${rndContext ? `Produk on development (R&D): ${rndContext}` : 'Belum ada produk dalam R&D.'}
 ${salesContext || 'Belum ada data penjualan.'}
@@ -124,33 +126,32 @@ ${infoContext ? `Riset terbaru:\n${infoContext}` : ''}
 === AKHIR DATA ===
 
 INSTRUKSI PENTING:
-- JANGAN hanya rekomendasikan inovasi dari produk yang sudah ada. WAJIB campurkan dengan produk/konsep BARU.
-- Komposisi WAJIB: 2 inovasi produk existing + 2 produk baru viral medsos/global + 1 packaging trend + 2 trend pasar nasional/global.
-- Untuk produk baru, sebutkan NAMA SPESIFIK dan contoh brand/produk yang sudah ada di pasaran.
-- Untuk packaging trend, sebutkan material, bentuk, dan kenapa menarik konsumen.
-- Berikan insight yang ACTIONABLE — bukan hanya observasi.
+- FOKUS UTAMA: Rekomendasikan ide-ide produk BARU yang fresh, unik, dan sedang trending, TAPI masih relevan dengan natural & healthy food.
+- Komposisi WAJIB (7 Produk): 4 Produk Baru Viral (Medsos/Global/Nasional) + 2 Packaging Trend Unik + HANYA 1 Inovasi Produk Existing.
+- Untuk produk baru, jelaskan secara spesifik NAMA PRODUK-nya dan mengapa itu bisa laku keras.
+- Bandingkan dengan data perusahaan: berikan alasan mengapa perusahaan HARUS membuat produk baru ini untuk melengkapi portofolio.
 
 Format JSON (tanpa markdown code blocks):
 {
   "products": [
     {
-      "nama_produk": "Nama spesifik produk/konsep trending",
-      "kategori": "Inovasi Produk Existing / Produk Baru Viral / Packaging Trend / Trend Global / Trend Nasional",
+      "nama_produk": "Nama spesifik produk/konsep trending (FOKUS PRODUK BARU)",
+      "kategori": "Produk Baru Viral / Trend Global / Trend Nasional / Packaging Trend / Inovasi Existing",
       "marketplace": "TikTok Shop/Shopee/Tokopedia/Instagram/Global Market",
-      "alasan_trending": "2-3 kalimat kenapa trending — sertakan data spesifik (views, sales volume, growth) jika memungkinkan",
+      "alasan_trending": "2-3 kalimat kenapa produk baru ini viral/trending — berikan alasan logis kenapa perusahaan harus membuatnya",
       "estimasi_durasi": "3-6 Bulan / 1-2 Tahun / Evergreen",
-      "rekomendasi": "Worth it / Risky / Saturated",
+      "rekomendasi": "Sangat Direkomendasikan / Worth it / Risky",
       "skor_trend": 85
     }
   ],
-  "insight_utama": "Insight kunci: gabungan analisis data internal + trend medsos + trend global",
-  "rekomendasi_bisnis": "2-3 rekomendasi aksi konkret: produk baru yang harus di-develop, packaging yang harus diadopsi, dan peluang yang harus segera diambil"
+  "insight_utama": "Insight kunci: peluang produk baru apa yang paling besar berdasarkan trend market saat ini yang belum digarap perusahaan",
+  "rekomendasi_bisnis": "2-3 rekomendasi aksi konkret: produk baru yang harus SEGERA di-develop dan alasan strategisnya"
 }
 
-Berikan 7 produk dengan komposisi seimbang. Skor 1-100. RETURN ONLY JSON.`;
+Berikan 7 produk dengan komposisi seperti di atas. Skor 1-100. RETURN ONLY JSON.`;
 
     const resultString = await generateGroqCompletion(
-      'Analisis komprehensif: (1) inovasi produk existing, (2) produk baru viral di medsos/TikTok, (3) packaging trend terbaru, (4) trend pasar global dan nasional untuk natural & healthy food. Output HANYA JSON.',
+      'Analisis komprehensif fokus produk baru: (1) ide produk baru viral di medsos, (2) trend pasar global/nasional untuk natural & healthy food, (3) packaging trend terbaru. Output HANYA JSON.',
       systemPrompt
     );
 
