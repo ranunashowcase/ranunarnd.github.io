@@ -251,6 +251,135 @@ export async function deleteSheetRow(
 }
 
 /**
+ * Bulk delete rows from a sheet.
+ * If targetDate is provided, only rows matching that date (YYYY-MM-DD) are deleted.
+ * If targetDate is null, all data rows (except header) are deleted.
+ */
+export async function deleteSheetRowsByCondition(
+  sheetName: string,
+  targetDate?: string | null
+): Promise<number> {
+  const sheets = await getGoogleSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+
+  try {
+    // 1. Get sheetId
+    const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetData = spreadsheetInfo.data.sheets?.find(
+      (s) => s.properties?.title === sheetName
+    );
+    if (!sheetData || sheetData.properties?.sheetId === undefined) {
+      throw new Error(`Sheet ${sheetName} not found`);
+    }
+    const sheetId = sheetData.properties.sheetId;
+
+    // 2. Fetch all values
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:Z`,
+    });
+    
+    const rows = response.data.values;
+    if (!rows || rows.length <= 1) return 0; // Empty or header only
+
+    const headers = rows[0].map((h: any) => String(h).toLowerCase());
+    
+    // Find date column if we need to filter by date
+    let dateColIndex = -1;
+    if (targetDate) {
+      dateColIndex = headers.findIndex((h) => 
+        ['tanggal', 'date', 'timestamp', 'created_at', 'waktu'].some(kw => h.includes(kw))
+      );
+      if (dateColIndex === -1) {
+         // Cannot filter by date if no date column exists
+         return 0;
+      }
+    }
+
+    // 3. Find rows to delete
+    const rowsToDelete: number[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      if (!targetDate) {
+        // Delete all
+        rowsToDelete.push(i);
+      } else {
+        // Delete by date
+        const rowDateRaw = String(rows[i][dateColIndex] || '');
+        let rowDate = '';
+        
+        // Parse date
+        if (rowDateRaw.includes('T')) {
+           rowDate = rowDateRaw.split('T')[0];
+        } else if (rowDateRaw.includes(' ')) {
+           rowDate = rowDateRaw.split(' ')[0];
+        } else {
+           rowDate = rowDateRaw;
+        }
+
+        // Extremely basic matching (assuming format YYYY-MM-DD or similar standard format)
+        if (rowDate.includes(targetDate) || targetDate.includes(rowDate)) {
+           rowsToDelete.push(i);
+        }
+      }
+    }
+
+    if (rowsToDelete.length === 0) return 0;
+
+    // 4. Batch delete in REVERSE order so indices don't shift!
+    rowsToDelete.sort((a, b) => b - a);
+
+    // Group contiguous rows to optimize requests
+    const requests: any[] = [];
+    let currentStartIndex = rowsToDelete[0];
+    let currentEndIndex = rowsToDelete[0] + 1;
+
+    for (let i = 1; i < rowsToDelete.length; i++) {
+      const idx = rowsToDelete[i];
+      if (idx === currentStartIndex - 1) {
+        // Contiguous
+        currentStartIndex = idx;
+      } else {
+        // Break in contiguous sequence
+        requests.push({
+          deleteDimension: {
+            range: {
+              sheetId: sheetId,
+              dimension: 'ROWS',
+              startIndex: currentStartIndex,
+              endIndex: currentEndIndex,
+            },
+          },
+        });
+        currentStartIndex = idx;
+        currentEndIndex = idx + 1;
+      }
+    }
+    
+    // Push the last group
+    requests.push({
+      deleteDimension: {
+        range: {
+          sheetId: sheetId,
+          dimension: 'ROWS',
+          startIndex: currentStartIndex,
+          endIndex: currentEndIndex,
+        },
+      },
+    });
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: { requests },
+    });
+
+    return rowsToDelete.length;
+  } catch (error) {
+    console.error('Error in bulk delete:', error);
+    throw error;
+  }
+}
+
+/**
  * Update a specific row by checking an ID matching in a given column index.
  * Replaces the entire row values.
  */
