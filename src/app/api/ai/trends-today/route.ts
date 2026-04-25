@@ -10,12 +10,13 @@ export async function GET() {
     // ====================================================
     // Fetch ALL context data in PARALLEL for speed
     // ====================================================
-    const [infoResult, trendResult, masterSkuResult, salesResult, marketWatchResult] = await Promise.allSettled([
+    const [infoResult, trendResult, masterSkuResult, salesResult, marketWatchResult, rndResult] = await Promise.allSettled([
       getSheetData<Record<string, string>>('INPUT INFORMASI'),
       getSheetData<Record<string, string>>('Trending Master'),
       getSheetData<Record<string, string>>('MASTER SKU'),
       getSheetData<Record<string, string | number>>('PEMESANAN PRODUK'),
       getSheetData<Record<string, string>>('MARKET WATCH'),
+      getSheetData<Record<string, string>>('RND ON PROGRESS'),
     ]);
 
     // ====================================================
@@ -88,6 +89,20 @@ export async function GET() {
     }
 
     // ====================================================
+    // 6. RND ON PROGRESS context
+    // ====================================================
+    let rndContext = '';
+    if (rndResult.status === 'fulfilled' && rndResult.value.length > 0) {
+      const recentRnd = rndResult.value.slice(0, 5);
+      rndContext = recentRnd.map((row) => {
+        const nama = row.nama_produk || '';
+        const kategori = row.kategori || '';
+        const fase = row.fase_development || '';
+        return `${nama} (${kategori} - ${fase})`;
+      }).filter(n => n.length > 5).join(', ');
+    }
+
+    // ====================================================
     // Build comprehensive prompt with REAL company data
     // ====================================================
     const systemPrompt = `Anda AI Market Intelligence Analyst EKSKLUSIF untuk PT. Shalee Berkah Jaya (Natural & Healthy Food: kurma, kacang, trail mix, madu, dll).
@@ -101,9 +116,10 @@ TUGAS: Berikan analisis trend KOMPREHENSIF yang mencakup:
 
 === DATA INTERNAL PERUSAHAAN ===
 ${skuContext || 'Belum ada data produk live.'}
+${rndContext ? `Produk on development (R&D): ${rndContext}` : 'Belum ada produk dalam R&D.'}
 ${salesContext || 'Belum ada data penjualan.'}
 ${trendingContext ? `Produk trending tercatat: ${trendingContext}` : ''}
-${marketWatchContext ? `Market watch terbaru: ${marketWatchContext}` : ''}
+${marketWatchContext ? `Market watch terbaru (manual): ${marketWatchContext}` : ''}
 ${infoContext ? `Riset terbaru:\n${infoContext}` : ''}
 === AKHIR DATA ===
 
