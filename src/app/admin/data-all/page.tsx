@@ -108,34 +108,50 @@ export default function DataAllPage() {
     { name: 'Informasi', Total: counts?.info || 0 },
   ];
 
-  // Table columns definition based on standard headers from sheets
-  const tableHeaders: Record<string, string[]> = {
-    sales: ['Tanggal', 'Barcode', 'Nama Produk', 'Qty', 'Platform'],
-    sku: ['Barcode', 'Nama SKU', 'Kategori', 'HPP', 'Harga Jual'],
-    rnd: ['nama_produk', 'kategori', 'fase_development', 'target_rilis', 'timestamp'],
-    market: ['Timestamp', 'Nama Produk', 'Platform', 'Perkiraan Harga', 'Volume Penjualan / Tren'],
-    info: ['created_at', 'kategori_info', 'judul', 'sumber_url']
+  // Dynamic headers: extract from actual data keys
+  const getTableHeaders = (type: keyof DataDetails): string[] => {
+    if (!details || !details[type] || details[type].length === 0) {
+      // Fallback headers when no data
+      const fallbackHeaders: Record<string, string[]> = {
+        sales: ['tanggal', 'nama_barang', 'qty', 'barcode_produk', 'sku_produk'],
+        sku: ['nama_barang', 'sku_produk', 'barcode_produk'],
+        rnd: ['nama_produk', 'kategori', 'fase_development', 'target_rilis', 'timestamp'],
+        market: ['Timestamp', 'Nama Ide/Produk', 'Tipe Trend', 'AI Layak Skor (1-100)', 'AI Estimasi Durasi Trend'],
+        info: ['created_at', 'kategori_info', 'judul', 'sumber'],
+      };
+      return fallbackHeaders[type] || [];
+    }
+    // Get keys from first data row, filter out very long/internal ones
+    const allKeys = Object.keys(details[type][0]);
+    return allKeys.filter(k => k.length < 50);
   };
 
-  const renderTableRows = (type: string, data: any[]) => {
+  const renderTableRows = (type: keyof DataDetails, data: any[]) => {
+    const headers = getTableHeaders(type);
     if (!data || data.length === 0) {
       return (
         <tr>
-          <td colSpan={tableHeaders[type].length} className="px-4 py-8 text-center text-gray-500">
+          <td colSpan={headers.length || 5} className="px-4 py-8 text-center text-gray-500">
             Tidak ada data yang ditemukan.
           </td>
         </tr>
       );
     }
-    
+
     // Only show top 50 to avoid performance issues
     return data.slice(0, 50).map((row, i) => (
       <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-        {tableHeaders[type].map(header => (
-          <td key={header} className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap max-w-[200px] truncate">
-            {row[header] || '-'}
-          </td>
-        ))}
+        {headers.map(header => {
+          const value = row[header];
+          const displayValue = value !== undefined && value !== null && value !== '' ? String(value) : '-';
+          // Truncate very long values
+          const truncated = displayValue.length > 120 ? displayValue.substring(0, 120) + '…' : displayValue;
+          return (
+            <td key={header} className="px-4 py-3 text-sm text-gray-700 whitespace-pre-wrap min-w-[120px] max-w-sm align-top" title={displayValue}>
+              {truncated}
+            </td>
+          );
+        })}
       </tr>
     ));
   };
@@ -240,7 +256,7 @@ export default function DataAllPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {tableHeaders[activeTab].map(header => (
+                {getTableHeaders(activeTab).map(header => (
                   <th key={header} className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {header.replace(/_/g, ' ')}
                   </th>
@@ -250,7 +266,7 @@ export default function DataAllPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={tableHeaders[activeTab].length} className="px-4 py-8 text-center">
+                  <td colSpan={getTableHeaders(activeTab).length || 5} className="px-4 py-8 text-center">
                     <div className="flex justify-center">
                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
                     </div>

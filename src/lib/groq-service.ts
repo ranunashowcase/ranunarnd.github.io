@@ -6,67 +6,82 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || 'dummy_key',
 });
 
+// Model configuration — centralized for easy updates
+const PRIMARY_MODEL = 'llama-3.3-70b-versatile';
+const FALLBACK_MODEL = 'llama-3.1-8b-instant';
+
 /**
  * Helper function to generate an AI response.
- * Uses llama-3.3-70b-versatile for best quality + speed balance.
+ * Primary: llama-3.3-70b-versatile (best quality)
+ * Fallback: llama-3.1-8b-instant (ultra fast)
  */
 export async function generateGroqCompletion(prompt: string, systemMessage?: string) {
-  try {
-    const messages: any[] = [];
-    
-    if (systemMessage) {
-      messages.push({ role: 'system', content: systemMessage });
-    }
-    
-    messages.push({ role: 'user', content: prompt });
+  const messages: any[] = [];
 
+  if (systemMessage) {
+    messages.push({ role: 'system', content: systemMessage });
+  }
+
+  messages.push({ role: 'user', content: prompt });
+
+  try {
     const completion = await groq.chat.completions.create({
       messages,
-      model: 'llama-3.3-70b-versatile',
+      model: PRIMARY_MODEL,
       temperature: 0.3,
-      max_tokens: 1500, // Increased from 1024 for richer answers
+      max_tokens: 2000,
     });
 
     return completion.choices[0]?.message?.content || '';
   } catch (error) {
-    console.error('Groq Service Error:', error);
-    throw new Error('Gagal menghubungi AI Server');
+    console.error(`Groq Primary (${PRIMARY_MODEL}) Error, trying fallback:`, error);
+
+    // Fallback to smaller model
+    try {
+      const fallback = await groq.chat.completions.create({
+        messages,
+        model: FALLBACK_MODEL,
+        temperature: 0.3,
+        max_tokens: 1500,
+      });
+
+      return fallback.choices[0]?.message?.content || '';
+    } catch (fallbackError) {
+      console.error(`Groq Fallback (${FALLBACK_MODEL}) also failed:`, fallbackError);
+      throw new Error('Gagal menghubungi AI Server');
+    }
   }
 }
 
 /**
- * Helper function for high-reasoning tasks.
- * Uses a tiered fallback strategy optimized for Vercel serverless:
- * 1. Try llama-3.3-70b-versatile (fast, reliable, good reasoning)
- * 2. Fallback to llama-3.1-8b-instant (ultra-fast) if 70b fails
+ * Helper function for high-reasoning tasks (executive summaries, deep analysis).
+ * Uses higher token limit and lower temperature for precision.
  */
 export async function generateDeepThinkingCompletion(prompt: string, systemMessage?: string) {
   const messages: any[] = [];
-  
+
   if (systemMessage) {
     messages.push({ role: 'system', content: systemMessage });
   }
-  
+
   messages.push({ role: 'user', content: prompt });
 
   try {
-    // Primary: Llama 3.3 70B — excellent reasoning, fast enough for serverless
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: PRIMARY_MODEL,
       messages,
       temperature: 0.2,
-      max_tokens: 2000, // Increased from 1500 for deep analysis
+      max_tokens: 3000,
       top_p: 0.9,
     });
 
     return completion.choices[0]?.message?.content || '';
   } catch (error) {
-    console.error('Groq Deep Thinking Error (Trying fallback to Llama 8b):', error);
-    
-    // Fallback: Llama 3.1 8B Instant — ultra fast, still capable
+    console.error(`Deep Thinking Primary (${PRIMARY_MODEL}) Error, trying fallback:`, error);
+
     try {
       const fallback = await groq.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: FALLBACK_MODEL,
         messages,
         temperature: 0.2,
         max_tokens: 2000,
@@ -77,5 +92,57 @@ export async function generateDeepThinkingCompletion(prompt: string, systemMessa
       console.error('All Groq models failed:', fallbackError);
       throw new Error('Gagal menghubungi AI Server - semua model tidak tersedia');
     }
+  }
+}
+
+/**
+ * Safely parse AI JSON response.
+ * Handles:
+ * - Markdown code blocks (```json ... ```)
+ * - Nested responses (e.g. { "executive_summary": { ... } })
+ * - JavaScript-style comments in JSON
+ * - Trailing commas
+ */
+export function safeParseAiJson<T = any>(raw: string, unwrapKeys?: string[]): T | null {
+  try {
+    // 1. Strip markdown code blocks if present
+    let cleaned = raw;
+    const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      cleaned = codeBlockMatch[1];
+    }
+
+    // 2. Extract JSON object
+    const startIdx = cleaned.indexOf('{');
+    const endIdx = cleaned.lastIndexOf('}');
+    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+      return null;
+    }
+
+    let jsonStr = cleaned.substring(startIdx, endIdx + 1);
+
+    // 3. Remove single-line comments (// ...)
+    jsonStr = jsonStr.replace(/\/\/[^\n]*/g, '');
+
+    // 4. Remove trailing commas before } or ]
+    jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
+
+    // 5. Parse
+    let parsed = JSON.parse(jsonStr);
+
+    // 6. Unwrap nested keys if specified
+    if (unwrapKeys) {
+      for (const key of unwrapKeys) {
+        if (parsed[key] && typeof parsed[key] === 'object') {
+          parsed = parsed[key];
+          break;
+        }
+      }
+    }
+
+    return parsed as T;
+  } catch (err) {
+    console.error('safeParseAiJson failed:', err);
+    return null;
   }
 }

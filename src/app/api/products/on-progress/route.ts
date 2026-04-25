@@ -2,9 +2,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSheetData, appendSheetData, updateSheetRow, deleteSheetRow, generateId, getCurrentTimestamp, initializeSheetHeaders } from '@/lib/sheets-service';
 import { OnProgressProduct } from '@/types';
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key' });
+import { generateGroqCompletion } from '@/lib/groq-service';
 
 const SHEET_NAME = 'RND ON PROGRESS';
 const HEADERS = [
@@ -62,14 +60,7 @@ Berikan:
 Jawab ringkas 2 paragraf. Di akhir tulis "LIFESPAN: XX Bulan" atau "LIFESPAN: Evergreen".`;
 
       try {
-        const completion = await groq.chat.completions.create({
-          messages: [{ role: 'user', content: prompt }],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.3,
-          max_tokens: 512,
-        });
-
-        const content = completion.choices[0]?.message?.content || '';
+        const content = await generateGroqCompletion(prompt);
         const match = content.match(/LIFESPAN:\s*(.+)/i);
         if (match) aiLifespan = match[1].trim();
         aiForecast = content.replace(/LIFESPAN:\s*.+/i, '').trim();
@@ -147,14 +138,7 @@ Berikan:
 Jawab ringkas 2 paragraf. Di akhir tulis "LIFESPAN: XX Bulan" atau "LIFESPAN: Evergreen".`;
 
       try {
-        const completion = await groq.chat.completions.create({
-          messages: [{ role: 'user', content: prompt }],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.3,
-          max_tokens: 512,
-        });
-
-        const content = completion.choices[0]?.message?.content || '';
+        const content = await generateGroqCompletion(prompt);
         const match = content.match(/LIFESPAN:\s*(.+)/i);
         if (match) aiLifespan = match[1].trim();
         aiForecast = content.replace(/LIFESPAN:\s*.+/i, '').trim();

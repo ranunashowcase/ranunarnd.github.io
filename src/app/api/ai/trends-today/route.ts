@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 10; // Vercel Hobby plan limit
+export const maxDuration = 20;
 
 import { NextResponse } from 'next/server';
-import { generateGroqCompletion } from '@/lib/groq-service';
+import { generateGroqCompletion, safeParseAiJson } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
 
 export async function GET() {
@@ -24,9 +24,9 @@ export async function GET() {
     // ====================================================
     let infoContext = '';
     if (infoResult.status === 'fulfilled' && infoResult.value.length > 0) {
-      const recentInfo = infoResult.value.slice(-3);
+      const recentInfo = infoResult.value.slice(-5);
       infoContext = recentInfo.map((i) =>
-        `[${i.kategori_info || 'Umum'}] ${i.judul}: ${(i.konten || '').substring(0, 250)}`
+        `[${i.kategori_info || 'Umum'}] ${i.judul}: ${(i.konten || '').substring(0, 400)}`
       ).join('\n');
     }
 
@@ -155,15 +155,14 @@ Berikan 7 produk dengan komposisi seperti di atas. Skor 1-100. RETURN ONLY JSON.
       systemPrompt
     );
 
-    try {
-      const startIdx = resultString.indexOf('{');
-      const endIdx = resultString.lastIndexOf('}');
-      const jsonStr = resultString.substring(startIdx, endIdx + 1);
-      const parsed = JSON.parse(jsonStr);
-      parsed.updated_at = new Date().toISOString();
+    const parsed = safeParseAiJson(resultString, ['data', 'analysis', 'result']);
 
+    if (parsed && parsed.products) {
+      // Ensure products is always an array
+      if (!Array.isArray(parsed.products)) parsed.products = [];
+      parsed.updated_at = new Date().toISOString();
       return NextResponse.json({ success: true, data: parsed });
-    } catch (parseError) {
+    } else {
       console.error('Failed to parse AI response:', resultString);
       return NextResponse.json(
         { success: false, error: 'Format AI tidak valid' },

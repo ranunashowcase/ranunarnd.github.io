@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 20;
 
 import { NextResponse } from 'next/server';
-import { generateGroqCompletion } from '@/lib/groq-service';
+import { generateGroqCompletion, safeParseAiJson } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
 
 export async function GET() {
@@ -44,6 +44,9 @@ ${rndData.slice(-5).map(r => `- ${r.nama_produk} (Fase: ${r.fase_development}, R
 
 [Market Watch Terkini (Maks 3)]
 ${marketData.slice(-3).map(m => `- ${m['Nama Produk'] || m['Nama Ide/Produk']}`).join('\n')}
+
+[Knowledge Base / Riset Terbaru (Maks 3)]
+${infoData.slice(-3).map(i => `- [${i.kategori_info || 'Umum'}] ${i.judul}: ${(i.konten || '').substring(0, 200)}`).join('\n')}
     `;
 
     const systemPrompt = `Anda adalah seorang Chief Intelligence Officer (CIO) di PT. Shalee Berkah Jaya (FMCG Natural & Healthy Food).
@@ -80,14 +83,23 @@ Format JSON Response HANYA:
         systemPrompt
       );
 
-      const startIdx = resultString.indexOf('{');
-      const endIdx = resultString.lastIndexOf('}');
-      
-      if (startIdx !== -1 && endIdx !== -1) {
-        const jsonStr = resultString.substring(startIdx, endIdx + 1);
-        parsedSummary = JSON.parse(jsonStr);
+      const parsed = safeParseAiJson(resultString, ['executive_summary', 'summary', 'report']);
+
+      if (parsed) {
+        // Ensure safety of properties to prevent frontend crashes
+        parsedSummary = {
+          judul: parsed.judul || "Laporan Kinerja R&D & Intelligence Market",
+          narasi_pembuka: parsed.narasi_pembuka || "Sistem berhasil mengumpulkan data operasional terkini.",
+          highlight_rnd: parsed.highlight_rnd || `Saat ini terdapat ${activeRnd} proyek R&D aktif.`,
+          rekomendasi_strategis: parsed.rekomendasi_strategis || "Tingkatkan sinergi antara tren pasar dan pipeline R&D.",
+          key_metrics: Array.isArray(parsed.key_metrics) ? parsed.key_metrics : [
+            { label: "Produk Aktif", value: skuData.length.toString() },
+            { label: "Volume Terjual", value: totalSalesVol.toString() },
+            { label: "Proyek R&D", value: activeRnd.toString() }
+          ]
+        };
       } else {
-        throw new Error('No JSON brackets found in AI response');
+        throw new Error('AI response could not be parsed as JSON');
       }
     } catch (aiError) {
       console.error('Failed to get/parse AI response, using fallback:', aiError);

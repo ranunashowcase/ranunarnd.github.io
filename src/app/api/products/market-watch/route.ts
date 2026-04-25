@@ -2,9 +2,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 10;
 import { NextResponse, NextRequest } from 'next/server';
 import { appendSheetData, getSheetData, deleteSheetRow, initializeSheetHeaders, getCurrentTimestamp } from '@/lib/sheets-service';
-import Groq from 'groq-sdk';
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key' });
+import { generateGroqCompletion } from '@/lib/groq-service';
 
 const SHEET_NAME = 'MARKET WATCH';
 const HEADERS = [
@@ -75,14 +73,7 @@ Berikan output LENGKAP dalam format berikut (HARUS mengikuti format persis):
 (Berikan angka kelayakan 1-100, hanya angka saja)`;
 
       try {
-        const chatCompletion = await groq.chat.completions.create({
-          messages: [{ role: 'user', content: prompt }],
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.3,
-          max_tokens: 2000,
-        });
-
-        const content = chatCompletion.choices[0]?.message?.content || '';
+        const content = await generateGroqCompletion(prompt);
 
         // Parse structured output
         const getSection = (tag: string) => {
