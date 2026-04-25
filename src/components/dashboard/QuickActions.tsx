@@ -1,10 +1,10 @@
 'use client';
 
-import { TrendingUp, Package, FlaskConical } from 'lucide-react';
+import { TrendingUp, Package, FlaskConical, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 interface QuickActionModalProps {
-  type: 'trending' | 'live-sku' | 'on-develop';
+  type: 'trending' | 'live-sku' | 'on-develop' | 'sales';
   onClose: () => void;
 }
 
@@ -23,7 +23,7 @@ interface ActionConfig {
 }
 
 function QuickActionModal({ type, onClose }: QuickActionModalProps) {
-  const config: Record<'trending' | 'live-sku' | 'on-develop', ActionConfig> = {
+  const config: Record<'trending' | 'live-sku' | 'on-develop' | 'sales', ActionConfig> = {
     trending: {
       title: 'Tambah Produk Trending',
       endpoint: '/api/products/market-watch',
@@ -56,6 +56,18 @@ function QuickActionModal({ type, onClose }: QuickActionModalProps) {
         { name: 'fase_development', label: 'Fase Saat Ini', type: 'select', options: ['Ideation', 'Formulation', 'Lab Testing', 'Packaging Design', 'Final Review'], required: true },
         { name: 'target_rilis', label: 'Target Rilis', type: 'date', required: true },
         { name: 'catatan_formulasi', label: 'Catatan R&D', type: 'textarea', required: false },
+      ],
+    },
+    'sales': {
+      title: 'Masukan Data Penjualan',
+      endpoint: '/api/sales-data',
+      fields: [
+        { name: 'tanggal', label: 'Tanggal Pesanan', type: 'date', required: true },
+        { name: 'barcode_produk', label: 'Barcode Produk', type: 'text', required: true },
+        { name: 'sku_produk', label: 'SKU Produk', type: 'text', required: false },
+        { name: 'nama_barang', label: 'Nama Barang', type: 'text', required: true },
+        { name: 'qty', label: 'Qty Terjual', type: 'number', required: true },
+        { name: 'platform', label: 'Platform Penjualan', type: 'select', options: ['TikTok', 'Shopee', 'Tokopedia', 'Offline', 'Lainnya'], required: true },
       ],
     },
   };
@@ -159,7 +171,7 @@ function QuickActionModal({ type, onClose }: QuickActionModalProps) {
 }
 
 export default function QuickActions() {
-  const [activeModal, setActiveModal] = useState<'trending' | 'live-sku' | 'on-develop' | null>(null);
+  const [activeModal, setActiveModal] = useState<'trending' | 'live-sku' | 'on-develop' | 'sales' | null>(null);
 
   const actions = [
     {
@@ -189,11 +201,20 @@ export default function QuickActions() {
       glow: 'shadow-violet-500/20',
       iconBg: 'bg-violet-400/20',
     },
+    {
+      key: 'sales' as const,
+      label: 'Masukan Data Penjualan',
+      desc: 'Input penjualan untuk AI analisis',
+      icon: ShoppingCart,
+      gradient: 'from-blue-500 to-indigo-500',
+      glow: 'shadow-blue-500/20',
+      iconBg: 'bg-blue-400/20',
+    },
   ];
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action) => {
           const Icon = action.icon;
           return (

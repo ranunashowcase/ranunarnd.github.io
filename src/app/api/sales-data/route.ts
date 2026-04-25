@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { getSheetData, initializeSheetHeaders } from '@/lib/sheets-service';
+import { getSheetData, initializeSheetHeaders, appendSheetData } from '@/lib/sheets-service';
 
 const SHEET_NAME = 'PEMESANAN PRODUK';
 
@@ -130,6 +130,35 @@ export async function GET() {
     console.error('Error fetching sales data:', error);
     return NextResponse.json(
       { success: false, error: 'Gagal mengambil data penjualan' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { tanggal, barcode_produk, sku_produk, nama_barang, qty, platform } = body;
+
+    const headers = ['Tanggal', 'Barcode Produk', 'SKU Produk', 'Nama Barang', 'Qty', 'Platform'];
+    await initializeSheetHeaders(SHEET_NAME, headers);
+
+    const values = [
+      tanggal || new Date().toISOString().split('T')[0],
+      barcode_produk || '',
+      sku_produk || '',
+      nama_barang || '',
+      qty || 0,
+      platform || ''
+    ];
+
+    await appendSheetData(SHEET_NAME, values);
+
+    return NextResponse.json({ success: true, message: 'Data penjualan berhasil disimpan' });
+  } catch (error) {
+    console.error('Error saving sales data:', error);
+    return NextResponse.json(
+      { success: false, error: 'Gagal menyimpan data penjualan' },
       { status: 500 }
     );
   }
