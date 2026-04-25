@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Database, Trash2, Calendar, AlertTriangle, CheckCircle2, ShoppingCart, Package, FlaskConical, TrendingUp, BrainCircuit } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface DataCounts {
   sales: number;
@@ -11,8 +12,17 @@ interface DataCounts {
   info: number;
 }
 
+interface DataDetails {
+  sales: any[];
+  sku: any[];
+  rnd: any[];
+  market: any[];
+  info: any[];
+}
+
 export default function DataAllPage() {
   const [counts, setCounts] = useState<DataCounts | null>(null);
+  const [details, setDetails] = useState<DataDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<string>('');
   
@@ -22,6 +32,8 @@ export default function DataAllPage() {
   const [confirmText, setConfirmText] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteResult, setDeleteResult] = useState<{ success: boolean; message: string } | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<'sales' | 'sku' | 'rnd' | 'market' | 'info'>('sales');
 
   const fetchData = async (date: string) => {
     setLoading(true);
@@ -31,6 +43,7 @@ export default function DataAllPage() {
       const json = await res.json();
       if (json.success) {
         setCounts(json.data.counts);
+        setDetails(json.data.details);
       }
     } catch (error) {
       console.error('Failed to fetch data', error);
@@ -80,12 +93,52 @@ export default function DataAllPage() {
   };
 
   const cards = [
-    { id: 'sales', title: 'Data Penjualan', count: counts?.sales || 0, icon: ShoppingCart, color: 'bg-blue-500', bg: 'bg-blue-50' },
-    { id: 'sku', title: 'Master SKU', count: counts?.sku || 0, icon: Package, color: 'bg-emerald-500', bg: 'bg-emerald-50' },
-    { id: 'rnd', title: 'Produk On Progress', count: counts?.rnd || 0, icon: FlaskConical, color: 'bg-violet-500', bg: 'bg-violet-50' },
-    { id: 'market', title: 'Market Watch', count: counts?.market || 0, icon: TrendingUp, color: 'bg-amber-500', bg: 'bg-amber-50' },
-    { id: 'info', title: 'Input Informasi', count: counts?.info || 0, icon: BrainCircuit, color: 'bg-pink-500', bg: 'bg-pink-50' },
+    { id: 'sales', title: 'Data Penjualan', count: counts?.sales || 0, icon: ShoppingCart, color: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-600' },
+    { id: 'sku', title: 'Master SKU', count: counts?.sku || 0, icon: Package, color: 'bg-emerald-500', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    { id: 'rnd', title: 'Produk On Progress', count: counts?.rnd || 0, icon: FlaskConical, color: 'bg-violet-500', bg: 'bg-violet-50', text: 'text-violet-600' },
+    { id: 'market', title: 'Market Watch', count: counts?.market || 0, icon: TrendingUp, color: 'bg-amber-500', bg: 'bg-amber-50', text: 'text-amber-600' },
+    { id: 'info', title: 'Input Informasi', count: counts?.info || 0, icon: BrainCircuit, color: 'bg-pink-500', bg: 'bg-pink-50', text: 'text-pink-600' },
   ];
+
+  const chartData = [
+    { name: 'Penjualan', Total: counts?.sales || 0 },
+    { name: 'Master SKU', Total: counts?.sku || 0 },
+    { name: 'On Progress', Total: counts?.rnd || 0 },
+    { name: 'Market Watch', Total: counts?.market || 0 },
+    { name: 'Informasi', Total: counts?.info || 0 },
+  ];
+
+  // Table columns definition based on standard headers from sheets
+  const tableHeaders: Record<string, string[]> = {
+    sales: ['Tanggal', 'Barcode', 'Nama Produk', 'Qty', 'Platform'],
+    sku: ['Barcode', 'Nama SKU', 'Kategori', 'HPP', 'Harga Jual'],
+    rnd: ['nama_produk', 'kategori', 'fase_development', 'target_rilis', 'timestamp'],
+    market: ['Timestamp', 'Nama Produk', 'Platform', 'Perkiraan Harga', 'Volume Penjualan / Tren'],
+    info: ['created_at', 'kategori_info', 'judul', 'sumber_url']
+  };
+
+  const renderTableRows = (type: string, data: any[]) => {
+    if (!data || data.length === 0) {
+      return (
+        <tr>
+          <td colSpan={tableHeaders[type].length} className="px-4 py-8 text-center text-gray-500">
+            Tidak ada data yang ditemukan.
+          </td>
+        </tr>
+      );
+    }
+    
+    // Only show top 50 to avoid performance issues
+    return data.slice(0, 50).map((row, i) => (
+      <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        {tableHeaders[type].map(header => (
+          <td key={header} className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap max-w-[200px] truncate">
+            {row[header] || '-'}
+          </td>
+        ))}
+      </tr>
+    ));
+  };
 
   return (
     <div className="space-y-6">
@@ -126,11 +179,13 @@ export default function DataAllPage() {
         {cards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
-              <div className={`w-10 h-10 ${card.bg} rounded-xl flex items-center justify-center mb-3`}>
-                <Icon className={`w-5 h-5 text-${card.color.replace('bg-', '')}`} />
+            <div key={card.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+              <div className="flex justify-between items-start mb-2">
+                <div className={`w-10 h-10 ${card.bg} rounded-xl flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${card.text}`} />
+                </div>
               </div>
-              <p className="text-sm font-medium text-gray-500">{card.title}</p>
+              <p className="text-xs font-medium text-gray-500">{card.title}</p>
               <h3 className="text-2xl font-bold text-gray-900 mt-1">
                 {loading ? <span className="animate-pulse bg-gray-200 h-8 w-16 rounded block" /> : card.count}
               </h3>
@@ -139,7 +194,83 @@ export default function DataAllPage() {
         })}
       </div>
 
-      <div className="bg-red-50 border border-red-100 rounded-2xl p-6 mt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+      {/* Chart Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-6">Grafik Volume Data</h3>
+        <div className="h-[300px] w-full">
+          {loading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} />
+                <Tooltip 
+                  cursor={{ fill: '#f9fafb' }}
+                  contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="Total" fill="#2d6a4f" radius={[6, 6, 0, 0]} maxBarSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </div>
+
+      {/* Tables Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Detail Data</h3>
+          <div className="flex flex-wrap gap-2">
+            {cards.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setActiveTab(c.id as any)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === c.id ? `bg-white shadow-sm border border-gray-200 ${c.text}` : 'text-gray-500 hover:bg-white hover:text-gray-700'}`}
+              >
+                {c.title}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                {tableHeaders[activeTab].map(header => (
+                  <th key={header} className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    {header.replace(/_/g, ' ')}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={tableHeaders[activeTab].length} className="px-4 py-8 text-center">
+                    <div className="flex justify-center">
+                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                renderTableRows(activeTab, details ? details[activeTab] : [])
+              )}
+            </tbody>
+          </table>
+          {!loading && details && details[activeTab] && details[activeTab].length > 50 && (
+            <div className="px-4 py-3 text-center text-xs text-gray-500 border-t border-gray-100 bg-gray-50">
+              Menampilkan 50 data teratas. (Total: {details[activeTab].length} data)
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
           <h3 className="text-lg font-bold text-red-900 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-600" />
