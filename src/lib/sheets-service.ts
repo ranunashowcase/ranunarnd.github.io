@@ -67,6 +67,27 @@ export async function appendSheetData(
 }
 
 /**
+ * Append multiple rows at once to a specified sheet tab.
+ * Much more efficient than calling appendSheetData per row.
+ */
+export async function appendSheetDataBulk(
+  sheetName: string,
+  rows: (string | number)[][]
+): Promise<void> {
+  const sheets = await getGoogleSheetsClient();
+  const spreadsheetId = getSpreadsheetId();
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `${sheetName}!A1`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: rows,
+    },
+  });
+}
+
+/**
  * Generate a unique ID with a prefix.
  * Format: PREFIX-001, PREFIX-002, etc.
  */
