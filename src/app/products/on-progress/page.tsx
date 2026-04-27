@@ -197,11 +197,18 @@ export default function OnProgressPage() {
               >
                 {/* Kode Unik Header */}
                 {product.foto_produk_url && (
-                  <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-50 relative flex flex-col items-center justify-center border-b border-gray-100">
-                    <Layers className="w-8 h-8 text-blue-300 mb-2" />
-                    <span className="px-3 py-1 bg-white/60 backdrop-blur-sm rounded-lg text-xs font-bold text-blue-700 tracking-wider shadow-sm border border-blue-100/50">
-                      {product.foto_produk_url}
-                    </span>
+                  <div className="h-40 bg-gradient-to-br from-blue-50 to-indigo-50 relative flex flex-col border-b border-gray-100 overflow-hidden group-hover:opacity-90 transition-opacity">
+                    <iframe 
+                        src={`https://galerirndranuna.vercel.app/?preview=${product.foto_produk_url}`}
+                        className="w-full h-full border-0 pointer-events-none absolute inset-0 z-0"
+                        title="Galeri Produk Preview"
+                    />
+                    <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1">
+                      <span className="px-2 py-1 bg-white/90 backdrop-blur-md rounded-md text-[10px] font-bold text-blue-700 tracking-wider shadow-sm border border-white/50 flex items-center gap-1">
+                        <Layers className="w-3 h-3" />
+                        {product.foto_produk_url}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -371,20 +378,37 @@ export default function OnProgressPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
             {/* Galeri Kode Unik Integration */}
             {selectedProduct.foto_produk_url && (
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 relative rounded-t-2xl border-b border-blue-800 p-8 text-center flex flex-col items-center justify-center text-white">
-                <Layers className="w-12 h-12 text-white/80 mb-3" />
-                <h3 className="text-sm text-blue-200 font-medium mb-1">Kode Galeri Produk</h3>
-                <div className="text-2xl font-black tracking-widest bg-black/20 px-6 py-2 rounded-xl border border-white/20 mb-4 inline-block">
-                  {selectedProduct.foto_produk_url}
+              <div className="bg-white rounded-t-2xl border-b border-gray-100 flex flex-col">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 flex items-center justify-between text-white rounded-t-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-lg">
+                      <Layers className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs text-blue-200 font-medium uppercase tracking-wider mb-0.5">Galeri Produk R&D</h3>
+                      <div className="font-bold tracking-wide">
+                        {selectedProduct.foto_produk_url}
+                      </div>
+                    </div>
+                  </div>
+                  <a 
+                    href={`https://galerirndranuna.vercel.app/?code=${selectedProduct.foto_produk_url}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm transition-colors border border-white/10"
+                  >
+                    Buka Penuh <ChevronRight className="w-4 h-4" />
+                  </a>
                 </div>
-                <a 
-                  href="https://galerirndranuna.vercel.app/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-full text-sm font-bold shadow-lg transition-transform hover:scale-105 active:scale-95"
-                >
-                  <Image className="w-4 h-4" /> Buka Galeri R&D
-                </a>
+                
+                {/* Embedded Gallery iframe */}
+                <div className="w-full bg-gray-50 h-[280px]">
+                   <iframe 
+                      src={`https://galerirndranuna.vercel.app/?embed=${selectedProduct.foto_produk_url}`}
+                      className="w-full h-full border-0"
+                      title="Galeri Produk"
+                   />
+                </div>
               </div>
             )}
 
