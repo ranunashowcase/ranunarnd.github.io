@@ -59,36 +59,11 @@ export default function OnProgressPage() {
   // Form state
   const [formData, setFormData] = useState({
     id: '', nama_produk: '', kategori: 'Kurma', fase_development: 'Ideation',
-    target_rilis: '', catatan_formulasi: '', foto_produk_url: '',
+    target_rilis: '', catatan_formulasi: '', foto_produk_url: '', // foto_produk_url now used for Kode Unik
     rangkaian_produk: '', ukuran_produk: '', mockup_url: '', tanggal_selesai: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingImage(true);
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/upload-image', { method: 'POST', body: form });
-      const data = await res.json();
-      if (data.success) {
-        setFormData(prev => ({ ...prev, foto_produk_url: data.url }));
-        showToast('Gambar berhasil diupload', 'success');
-      } else {
-        showToast(data.error || 'Gagal upload', 'error');
-      }
-    } catch {
-      showToast('Error upload gambar', 'error');
-    } finally {
-      setUploadingImage(false);
-    }
-  };
 
   const openForm = (product?: OnProgressProduct) => {
     if (product) {
@@ -220,17 +195,13 @@ export default function OnProgressPage() {
                 className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden cursor-pointer group"
                 onClick={() => setSelectedProduct(product)}
               >
-                {/* Image header */}
+                {/* Kode Unik Header */}
                 {product.foto_produk_url && (
-                  <div className="h-40 bg-gray-100 relative overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getDirectImageUrl(product.foto_produk_url.split(',')[0].trim())}
-                      alt={product.nama_produk}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                  <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-50 relative flex flex-col items-center justify-center border-b border-gray-100">
+                    <Layers className="w-8 h-8 text-blue-300 mb-2" />
+                    <span className="px-3 py-1 bg-white/60 backdrop-blur-sm rounded-lg text-xs font-bold text-blue-700 tracking-wider shadow-sm border border-blue-100/50">
+                      {product.foto_produk_url}
+                    </span>
                   </div>
                 )}
 
@@ -351,14 +322,15 @@ export default function OnProgressPage() {
               </div>
 
               <div>
-                <label className="form-label flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> URL Gambar Thumbnail / Galeri</label>
-                <textarea 
-                  className="form-input min-h-[60px] resize-y text-sm" 
-                  placeholder="https://drive.google.com/..., https://imgur.com/... (Pisahkan dengan koma jika lebih dari satu gambar untuk membuat galeri)" 
+                <label className="form-label flex items-center gap-1.5"><Layers className="w-3.5 h-3.5" /> Kode Unik Produk (Untuk Galeri)</label>
+                <input 
+                  type="text"
+                  className="form-input text-sm uppercase" 
+                  placeholder="Misal: RND-ALPHA-01" 
                   value={formData.foto_produk_url} 
-                  onChange={(e) => setFormData({ ...formData, foto_produk_url: e.target.value })} 
+                  onChange={(e) => setFormData({ ...formData, foto_produk_url: e.target.value.toUpperCase() })} 
                 />
-                <p className="text-[10px] text-gray-400 mt-1">Gunakan link Google Drive, Imgur, atau link gambar publik lainnya.</p>
+                <p className="text-[10px] text-gray-400 mt-1">Masukkan kode unik untuk dihubungkan dengan web Galeri Produk R&D.</p>
               </div>
 
               <div>
@@ -397,36 +369,22 @@ export default function OnProgressPage() {
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            {/* Image Gallery */}
+            {/* Galeri Kode Unik Integration */}
             {selectedProduct.foto_produk_url && (
-              <div className="bg-gray-100 relative rounded-t-2xl border-b border-gray-200">
-                {selectedProduct.foto_produk_url.split(',').length > 1 ? (
-                  <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar p-4 gap-4 h-64 items-center">
-                    {selectedProduct.foto_produk_url.split(',').map((url, idx) => (
-                      <div key={idx} className="flex-none w-full sm:w-80 h-56 relative rounded-xl overflow-hidden shadow-sm snap-center bg-white border border-gray-200 flex items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={getDirectImageUrl(url.trim())}
-                          alt={`${selectedProduct.nama_produk} - View ${idx + 1}`}
-                          className="max-w-full max-h-full object-contain cursor-zoom-in hover:scale-105 transition-transform duration-300"
-                          onClick={(e) => { e.stopPropagation(); setFullscreenImage(url.trim()); }}
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="h-64 flex items-center justify-center p-4">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getDirectImageUrl(selectedProduct.foto_produk_url.trim())}
-                      alt={selectedProduct.nama_produk}
-                      className="max-w-full max-h-full object-contain drop-shadow-md cursor-zoom-in hover:scale-105 transition-transform duration-300"
-                      onClick={(e) => { e.stopPropagation(); setFullscreenImage(selectedProduct.foto_produk_url.trim()); }}
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
-                )}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 relative rounded-t-2xl border-b border-blue-800 p-8 text-center flex flex-col items-center justify-center text-white">
+                <Layers className="w-12 h-12 text-white/80 mb-3" />
+                <h3 className="text-sm text-blue-200 font-medium mb-1">Kode Galeri Produk</h3>
+                <div className="text-2xl font-black tracking-widest bg-black/20 px-6 py-2 rounded-xl border border-white/20 mb-4 inline-block">
+                  {selectedProduct.foto_produk_url}
+                </div>
+                <a 
+                  href="https://galerirndranuna.vercel.app/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-full text-sm font-bold shadow-lg transition-transform hover:scale-105 active:scale-95"
+                >
+                  <Image className="w-4 h-4" /> Buka Galeri R&D
+                </a>
               </div>
             )}
 
@@ -530,21 +488,7 @@ export default function OnProgressPage() {
           </div>
         </div>
       )}
-      {/* Lightbox / Fullscreen Image */}
-      {fullscreenImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setFullscreenImage(null)}>
-          <button className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors" onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}>
-            <X className="w-6 h-6" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={getDirectImageUrl(fullscreenImage)} 
-            alt="Fullscreen view" 
-            className="max-w-full max-h-full object-contain drop-shadow-2xl cursor-default rounded-lg"
-            onClick={(e) => e.stopPropagation()} 
-          />
-        </div>
-      )}
+      {/* Modal removed */}
     </div>
   );
 }
