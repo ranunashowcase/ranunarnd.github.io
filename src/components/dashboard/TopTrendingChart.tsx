@@ -7,16 +7,27 @@ import { AiTrendAnalysis, AiTrendProduct } from '@/types';
 export default function TopTrendingChart() {
   const [data, setData] = useState<AiTrendAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     fetch(`/api/ai/trends-today?t=${Date.now()}`, { cache: 'no-store' })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((json) => {
         if (json.success && json.data) {
           setData(json.data);
+          setErrorMsg('');
+        } else {
+          setErrorMsg(json.error || 'Terjadi kesalahan dari AI');
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        setErrorMsg(err.message || 'Gagal menghubungi server');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -29,12 +40,13 @@ export default function TopTrendingChart() {
     );
   }
 
-  if (!data || !data.products || data.products.length === 0) {
+  if (errorMsg || !data || !data.products || data.products.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6 min-h-[300px] flex flex-col items-center justify-center">
+      <div className="bg-white rounded-2xl shadow-card border border-gray-100 p-6 min-h-[300px] flex flex-col items-center justify-center text-center">
         <Sparkles className="w-10 h-10 text-gray-200 mb-3" />
-        <h3 className="text-sm font-semibold text-gray-500">AI Belum Tersedia</h3>
-        <p className="text-xs text-gray-400 mt-1">Pastikan GROQ_API_KEY sudah dikonfigurasi</p>
+        <h3 className="text-sm font-semibold text-gray-500">AI Gagal Memuat Data</h3>
+        <p className="text-xs text-red-400 mt-2 max-w-[250px]">{errorMsg || 'Data kosong atau API Key belum diatur'}</p>
+        <p className="text-[10px] text-gray-400 mt-2">Pastikan konfigurasi API Key dan Environment Variables di Vercel sudah benar, lalu lakukan redeploy.</p>
       </div>
     );
   }

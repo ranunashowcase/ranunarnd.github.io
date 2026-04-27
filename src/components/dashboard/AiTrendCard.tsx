@@ -14,14 +14,17 @@ export default function AiTrendCard() {
     setError('');
     try {
       const res = await fetch(`/api/ai/trends-today?t=${Date.now()}`, { cache: 'no-store' });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
       } else {
         setError(json.error || 'Gagal memuat insight');
       }
-    } catch {
-      setError('Terjadi kesalahan koneksi ke AI');
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan koneksi ke AI');
     } finally {
       setLoading(false);
     }

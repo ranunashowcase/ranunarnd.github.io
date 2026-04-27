@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 20;
+export const maxDuration = 60;
 
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion, safeParseAiJson } from '@/lib/groq-service';
@@ -169,10 +169,10 @@ Berikan 7 produk dengan komposisi seperti di atas. Skor 1-100. RETURN ONLY JSON.
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Gagal mengambil data AI trend' },
+      { success: false, error: error.message || 'Gagal mengambil data AI trend' },
       { status: 500 }
     );
   }
