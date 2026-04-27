@@ -73,6 +73,7 @@ ${infoContext ? `Riset & knowledge base terbaru:\n${infoContext}` : ''}
 === AKHIR DATA ===
 
 TUGAS: Berdasarkan pengetahuan Anda tentang tren F&B terkini di dunia dan Indonesia, serta data internal perusahaan di atas, berikan ringkasan trend terkini.
+WAJIB: Jadikan data "Riset & knowledge base terbaru" sebagai REFERENSI UTAMA. Data ini adalah hasil riset (PDF/Artikel) yang diunggah khusus oleh admin. Ekstrak insight dan tren dari sana.
 PENTING: Fokus HANYA pada lingkup Natural & Healthy Product (kurma, kacang-kacangan, superfood, makanan sehat organik). Jangan bahas makanan/minuman tidak sehat.
 
 INSTRUKSI:

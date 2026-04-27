@@ -194,6 +194,7 @@ DATA INTERNAL PERUSAHAAN:
 ${dataContext}
 
 Berdasarkan SELURUH data di atas dan pengetahuan eksternal Anda mengenai industri F&B, pastikan Anda WAJIB menganalisis tren pasar global (Amerika, Eropa, Timur Tengah, Asia) dan tren pasar nasional Indonesia (TikTok, Shopee, Tokopedia, perilaku konsumen lokal).
+WAJIB: Data dari "INPUT INFORMASI / RISET" adalah bahan/modal utama yang diberikan oleh admin (berupa hasil riset PDF/Artikel). Jadikan data ini sebagai REFERENSI UTAMA dalam memberikan analisis dan rekomendasi produk.
 FOKUS UTAMA: Semua analisis dan rekomendasi HARUS berada di dalam lingkup "Natural and Healthy Product" (kurma, kacang-kacangan, superfood, makanan sehat, organik).
 
 PENTING: Untuk setiap bagian, tulis narasi yang SANGAT LENGKAP dan MENDALAM (3-5 paragraf per bagian). Jangan hanya menulis ringkasan singkat.

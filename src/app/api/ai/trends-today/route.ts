@@ -127,6 +127,7 @@ ${infoContext ? `Riset terbaru:\n${infoContext}` : ''}
 
 INSTRUKSI PENTING:
 - FOKUS UTAMA: Rekomendasikan ide-ide produk BARU yang fresh, unik, dan sedang trending, TAPI masih relevan dengan natural & healthy food.
+- WAJIB: Jadikan data "Riset terbaru" (Input Informasi) sebagai REFERENSI UTAMA. Data ini adalah hasil riset (PDF/Artikel) yang diunggah khusus oleh admin. Ekstrak ide, tren, atau bahan baku dari sana.
 - Komposisi WAJIB (7 Produk): 4 Produk Baru Viral (Medsos/Global/Nasional) + 2 Packaging Trend Unik + HANYA 1 Inovasi Produk Existing.
 - Untuk produk baru, jelaskan secara spesifik NAMA PRODUK-nya dan mengapa itu bisa laku keras.
 - Bandingkan dengan data perusahaan: berikan alasan mengapa perusahaan HARUS membuat produk baru ini untuk melengkapi portofolio.
