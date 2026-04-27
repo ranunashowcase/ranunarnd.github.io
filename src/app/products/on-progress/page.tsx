@@ -65,6 +65,7 @@ export default function OnProgressPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -407,7 +408,8 @@ export default function OnProgressPage() {
                         <img
                           src={getDirectImageUrl(url.trim())}
                           alt={`${selectedProduct.nama_produk} - View ${idx + 1}`}
-                          className="max-w-full max-h-full object-contain"
+                          className="max-w-full max-h-full object-contain cursor-zoom-in hover:scale-105 transition-transform duration-300"
+                          onClick={(e) => { e.stopPropagation(); setFullscreenImage(url.trim()); }}
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
@@ -419,7 +421,8 @@ export default function OnProgressPage() {
                     <img
                       src={getDirectImageUrl(selectedProduct.foto_produk_url.trim())}
                       alt={selectedProduct.nama_produk}
-                      className="max-w-full max-h-full object-contain drop-shadow-md"
+                      className="max-w-full max-h-full object-contain drop-shadow-md cursor-zoom-in hover:scale-105 transition-transform duration-300"
+                      onClick={(e) => { e.stopPropagation(); setFullscreenImage(selectedProduct.foto_produk_url.trim()); }}
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   </div>
@@ -525,6 +528,21 @@ export default function OnProgressPage() {
               )}
             </div>
           </div>
+        </div>
+      )}
+      {/* Lightbox / Fullscreen Image */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setFullscreenImage(null)}>
+          <button className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors" onClick={(e) => { e.stopPropagation(); setFullscreenImage(null); }}>
+            <X className="w-6 h-6" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src={getDirectImageUrl(fullscreenImage)} 
+            alt="Fullscreen view" 
+            className="max-w-full max-h-full object-contain drop-shadow-2xl cursor-default rounded-lg"
+            onClick={(e) => e.stopPropagation()} 
+          />
         </div>
       )}
     </div>
