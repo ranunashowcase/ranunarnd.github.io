@@ -73,10 +73,11 @@ ${infoContext ? `Riset & knowledge base terbaru:\n${infoContext}` : ''}
 === AKHIR DATA ===
 
 TUGAS: Berdasarkan pengetahuan Anda tentang tren F&B terkini di dunia dan Indonesia, serta data internal perusahaan di atas, berikan ringkasan trend terkini.
+PENTING: Fokus HANYA pada lingkup Natural & Healthy Product (kurma, kacang-kacangan, superfood, makanan sehat organik). Jangan bahas makanan/minuman tidak sehat.
 
 INSTRUKSI:
-- "global_trends": 3 tren F&B global terkini (Amerika/Eropa/Korea/Jepang) yang RELEVAN dengan natural & healthy food
-- "national_trends": 3 tren F&B nasional Indonesia terkini (dari TikTok, Shopee, Tokopedia, Instagram) 
+- "global_trends": 3 tren F&B global terkini (Amerika/Eropa/Timur Tengah/Asia) yang RELEVAN dengan natural & healthy food
+- "national_trends": 3 tren F&B nasional Indonesia terkini (dari TikTok, Shopee, Tokopedia, perilaku konsumen lokal) yang RELEVAN dengan natural & healthy food
 - "key_insight": Satu kalimat strategis yang menghubungkan tren pasar dengan peluang bisnis perusahaan
 - Jawab dalam Bahasa Indonesia
 - HINDARI merekomendasikan produk yang sudah dimiliki perusahaan

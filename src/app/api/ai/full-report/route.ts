@@ -193,9 +193,11 @@ ATURAN PENULISAN:
 DATA INTERNAL PERUSAHAAN:
 ${dataContext}
 
-Berdasarkan SELURUH data di atas dan pengetahuan Anda tentang industri F&B, tren pasar global (Amerika, Eropa, Korea, Jepang) dan nasional Indonesia (TikTok, Shopee, Tokopedia, Instagram), buatlah laporan dalam format JSON berikut.
+Berdasarkan SELURUH data di atas dan pengetahuan eksternal Anda mengenai industri F&B, pastikan Anda WAJIB menganalisis tren pasar global (Amerika, Eropa, Timur Tengah, Asia) dan tren pasar nasional Indonesia (TikTok, Shopee, Tokopedia, perilaku konsumen lokal).
+FOKUS UTAMA: Semua analisis dan rekomendasi HARUS berada di dalam lingkup "Natural and Healthy Product" (kurma, kacang-kacangan, superfood, makanan sehat, organik).
 
 PENTING: Untuk setiap bagian, tulis narasi yang SANGAT LENGKAP dan MENDALAM (3-5 paragraf per bagian). Jangan hanya menulis ringkasan singkat.
+
 
 {
   "executive_summary": {

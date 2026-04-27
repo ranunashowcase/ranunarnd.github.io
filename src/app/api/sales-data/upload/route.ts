@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     const headersLower = rawHeaders.map((h) => h.toLowerCase());
 
     // ====================================================
-    // Smart column mapping — supports various Excel formats
+    // Smart column mapping (Hanya untuk validasi)
     // ====================================================
     const findCol = (keywords: string[]): number => {
       return headersLower.findIndex((h) =>
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     const tanggalCol = findCol(['tanggal', 'date', 'waktu pesanan', 'waktu']);
     const barcodeCol = findCol(['barcode']);
-    const skuCol = findCol(['sku', 'nomor referensi']);
+    const skuCol = findCol(['sku', 'nomor referensi', 'sku induk']);
     const namaCol = findCol(['nama produk', 'nama barang', 'nama', 'product name']);
     const qtyCol = findCol(['qty', 'jumlah', 'quantity', 'kuantitas']);
     const platformCol = findCol(['platform', 'marketplace', 'channel', 'toko']);
@@ -91,9 +91,9 @@ export async function POST(req: Request) {
     }
 
     // ====================================================
-    // Initialize sheet headers
+    // Initialize sheet headers with ALL ORIGINAL HEADERS
     // ====================================================
-    const sheetHeaders = ['Tanggal', 'Barcode Produk', 'SKU Produk', 'Nama Barang', 'Qty', 'Platform'];
+    const sheetHeaders = rawHeaders;
     await initializeSheetHeaders(SHEET_NAME, sheetHeaders);
 
     // ====================================================
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     let skippedRows = 0;
 
     for (const row of dataRows) {
-      // Extract qty
+      // Extract qty for validation
       const qtyRaw = String(row[qtyCol] || '0');
       const qty = parseInt(qtyRaw.replace(/[^\d]/g, ''), 10) || 0;
       if (qty <= 0) {
@@ -112,33 +112,35 @@ export async function POST(req: Request) {
         continue; // Skip rows with 0 or invalid qty
       }
 
-      // Extract tanggal
-      let tanggal = '';
-      if (tanggalCol !== -1) {
-        const rawDate = row[tanggalCol];
-        if (rawDate instanceof Date) {
-          tanggal = rawDate.toISOString().split('T')[0];
-        } else {
-          tanggal = String(rawDate || '').split(' ')[0]; // Take date part only
-        }
-      }
-      if (!tanggal) {
-        tanggal = new Date().toISOString().split('T')[0]; // Default to today
-      }
-
-      // Extract other fields
+      // Check if product identifier exists
       const barcode = barcodeCol !== -1 ? String(row[barcodeCol] || '').trim() : '';
       const sku = skuCol !== -1 ? String(row[skuCol] || '').trim() : '';
       const nama = namaCol !== -1 ? String(row[namaCol] || '').trim() : '';
-      const platform = platformCol !== -1 ? String(row[platformCol] || '').trim() : '';
 
-      // Skip if no product identifier at all
       if (!nama && !sku && !barcode) {
         skippedRows++;
         continue;
       }
 
-      bulkValues.push([tanggal, barcode, sku, nama, qty, platform]);
+      // Format date if needed, but preserve all other columns exactly as is
+      const finalRow = [...row];
+      
+      if (tanggalCol !== -1) {
+        const rawDate = row[tanggalCol];
+        if (rawDate instanceof Date) {
+          finalRow[tanggalCol] = rawDate.toISOString().split('T')[0];
+        } else if (rawDate) {
+          finalRow[tanggalCol] = String(rawDate).split(' ')[0];
+        }
+      }
+
+      // Fill empty cells with empty strings up to header length to ensure alignment
+      while (finalRow.length < sheetHeaders.length) {
+        finalRow.push('');
+      }
+
+      // Trim to header length in case row has extra unheadered data
+      bulkValues.push(finalRow.slice(0, sheetHeaders.length));
     }
 
     if (bulkValues.length === 0) {

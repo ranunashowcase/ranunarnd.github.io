@@ -57,6 +57,7 @@ DATA SAAT INI:
 ${dataContext}
 
 INSTRUKSI PENULISAN:
+- WAJIB berikan rekomendasi strategis berdasarkan tren pasar global & nasional khusus pada industri Natural & Healthy Food.
 - Gunakan bahasa bisnis profesional yang elegan, optimis, dan berwibawa.
 - Fokus pada "Pencapaian", "Aktivitas Saat Ini", dan "Rekomendasi Strategis".
 - Panjang narasi sekitar 3-4 paragraf yang sangat padat informasi (impact-oriented).
