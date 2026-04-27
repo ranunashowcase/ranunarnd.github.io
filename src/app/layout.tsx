@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/Toast';
-import AiChatWidget from '@/components/chat/AiChatWidget';
 import AppLayout from '@/components/layout/AppLayout';
+import { AuthProvider } from '@/components/auth/AuthContext';
 
 export const metadata: Metadata = {
   title: 'SBJ RnD System — Market Intelligence',
@@ -19,10 +19,11 @@ export default function RootLayout({
     <html lang="id">
       <body className="antialiased">
         <ToastProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-          <AiChatWidget />
+          <AuthProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </AuthProvider>
         </ToastProvider>
       </body>
     </html>

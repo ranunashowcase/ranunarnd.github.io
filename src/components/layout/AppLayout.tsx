@@ -5,9 +5,12 @@ import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/auth/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, loading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -36,6 +39,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setIsSidebarOpen(false);
     }
   }, [pathname, isMobile]);
+
+  // Bypass layout for public routes
+  if (pathname === '/login') {
+    return <>{children}</>;
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
+          <p className="text-sm font-medium text-gray-500">Memverifikasi Sesi...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user and not loading (redirect is handled by AuthContext), don't render layout
+  if (!user) return null;
 
   return (
     <div className="flex min-h-screen overflow-hidden">

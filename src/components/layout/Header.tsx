@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { Menu, User, Settings, Database, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthContext';
 
 export default function Header({ toggleSidebar, isSidebarOpen, isMobile }: { toggleSidebar?: () => void; isSidebarOpen?: boolean; isMobile?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -69,8 +71,8 @@ export default function Header({ toggleSidebar, isSidebarOpen, isMobile }: { tog
           {isOpen && (
             <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 animate-slide-up origin-top-right">
               <div className="px-4 py-3 border-b border-gray-50 mb-2">
-                <p className="text-sm font-semibold text-gray-900">Administrator</p>
-                <p className="text-xs text-gray-500">admin@shalee.co.id</p>
+                <p className="text-sm font-semibold text-gray-900">{user?.nama || 'Administrator'}</p>
+                <p className="text-xs text-gray-500">{user?.email || 'admin@sbjrnd.com'}</p>
               </div>
 
               <nav className="flex flex-col gap-1 px-2">
@@ -79,12 +81,26 @@ export default function Header({ toggleSidebar, isSidebarOpen, isMobile }: { tog
                   Profil
                 </button>
                 
-                <button className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 hover:text-brand-primary hover:bg-brand-primary/5 rounded-xl transition-colors w-full text-left">
-                  <Settings className="w-4 h-4 text-gray-400" />
-                  Pengaturan
-                </button>
+                {user?.role === 'admin' && (
+                  <Link
+                    href="/admin/users"
+                    className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 hover:text-brand-primary hover:bg-brand-primary/5 rounded-xl transition-colors w-full text-left"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    Kelola User
+                  </Link>
+                )}
                 
                 <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors w-full text-left"
+                >
+                  <X className="w-4 h-4 text-red-400" />
+                  Logout
+                </button>
+              </nav>
 
                 <Link
                   href="/admin/data-all"

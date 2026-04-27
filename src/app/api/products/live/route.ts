@@ -1,9 +1,19 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { appendSheetData } from '@/lib/sheets-service';
+import { verifyToken, isAdmin } from '@/lib/auth-service';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    const user = token ? verifyToken(token) : null;
+    
+    if (!isAdmin(user)) {
+      return NextResponse.json({ success: false, error: 'Akses Ditolak: Hanya Admin yang dapat menambahkan produk live' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { barcode_produk, sku_produk, sku_per_produk, nama_barang, qty } = body;
 
