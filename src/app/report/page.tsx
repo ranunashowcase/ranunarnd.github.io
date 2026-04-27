@@ -78,14 +78,22 @@ const loadingSteps = [
   'Finalisasi dokumen laporan...',
 ];
 
+import { useAuth } from '@/components/auth/AuthContext';
+
 export default function ReportPage() {
+  const { isAdmin } = useAuth();
   const [data, setData] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const reportRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const handleGenerate = () => {
+    setLoading(true);
+    setError(null);
+    setLoadingStep(0);
+    setData(null);
+
     const interval = setInterval(() => {
       setLoadingStep((prev) => (prev < loadingSteps.length - 1 ? prev + 1 : prev));
     }, 3000);
@@ -104,9 +112,42 @@ export default function ReportPage() {
         clearInterval(interval);
         setLoading(false);
       });
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="bg-red-50 p-6 rounded-2xl border border-red-100 flex items-center gap-4 max-w-md">
+          <AlertTriangle className="w-8 h-8 text-red-600 shrink-0" />
+          <p className="text-red-800 font-medium text-sm">
+            Akses Ditolak. Anda tidak memiliki izin untuk melihat atau membuat laporan R&D eksekutif ini.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no data and not loading, show the trigger screen
+  if (!data && !loading && !error) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto text-center">
+        <div className="w-20 h-20 bg-brand-primary/10 rounded-full flex items-center justify-center mb-6">
+          <BookOpen className="w-10 h-10 text-brand-primary" />
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Laporan Eksekutif R&D</h1>
+        <p className="text-gray-600 mb-8 leading-relaxed">
+          Sistem akan mengumpulkan data Master SKU, Pemesanan, Produk On Progress, Trend Pasar, dan Input Informasi untuk menghasilkan satu laporan analitik komprehensif. Proses ini akan memakan waktu sekitar 30-60 detik.
+        </p>
+        <button
+          onClick={handleGenerate}
+          className="px-8 py-4 bg-brand-primary text-white rounded-2xl font-bold hover:bg-brand-secondary transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
+        >
+          <Sparkles className="w-5 h-5" />
+          Buat Report Sekarang
+        </button>
+      </div>
+    );
+  }
 
   const handleDownloadPDF = () => window.print();
 
