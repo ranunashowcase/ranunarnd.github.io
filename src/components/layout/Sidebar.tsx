@@ -29,72 +29,45 @@ const navItems = [
   { label: 'Input Informasi', href: '/input-info', icon: BrainCircuit },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, setIsOpen, isMobile }: { isOpen?: boolean; setIsOpen?: (v: boolean) => void; isMobile?: boolean }) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Close mobile menu on path change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
 
   return (
-    <>
-      {/* Mobile Toggle Button */}
-      <button 
-        onClick={() => setMobileMenuOpen(true)}
-        className="md:hidden fixed top-4 right-4 z-[45] p-2 bg-white text-brand-primary rounded-xl shadow-md border border-gray-100 flex items-center justify-center"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
-
-      {/* Screen Overlay */}
-      {mobileMenuOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-opacity"
-          onClick={() => setMobileMenuOpen(false)}
-        />
+    <aside
+      className={cn(
+        'fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0f2419] via-[#1B4332] to-[#143327] text-white shadow-sidebar z-50',
+        'flex flex-col transition-all duration-300 ease-in-out custom-scrollbar',
+        isOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full w-[260px]'
       )}
-
-      <aside
-        className={cn(
-          'fixed left-0 top-0 h-screen bg-gradient-to-b from-[#0f2419] via-[#1B4332] to-[#143327] text-white shadow-sidebar z-50',
-          'flex flex-col transition-all duration-300 ease-in-out custom-scrollbar',
-          !mobileMenuOpen ? '-translate-x-full md:translate-x-0' : 'translate-x-0',
-          collapsed ? 'md:w-[72px] w-[260px]' : 'w-[260px]'
-        )}
-      >
+    >
       {/* Logo Section */}
       <div className="flex items-center justify-between px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-accent/20 flex-shrink-0 shadow-lg shadow-brand-accent/10">
             <Leaf className="w-6 h-6 text-brand-accent" />
           </div>
-          {!collapsed && (
-            <div className="animate-fade-in">
-              <h1 className="text-base font-bold tracking-tight">SBJ R&D</h1>
-              <p className="text-[11px] text-white/40 font-medium">Intelligence System</p>
-            </div>
-          )}
+          <div className="animate-fade-in">
+            <h1 className="text-base font-bold tracking-tight">SBJ R&D</h1>
+            <p className="text-[11px] text-white/40 font-medium">Intelligence System</p>
+          </div>
         </div>
         
         {/* Mobile close button */}
-        <button 
-          onClick={() => setMobileMenuOpen(false)}
-          className="md:hidden p-2 text-white/50 hover:text-white rounded-lg transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {isMobile && setIsOpen && (
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="md:hidden p-2 text-white/50 hover:text-white rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-5 px-3 overflow-y-auto">
-        {!collapsed && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25 px-3 mb-3">
-            Menu
-          </p>
-        )}
+        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25 px-3 mb-3">
+          Menu
+        </p>
         <ul className="space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -109,7 +82,6 @@ export default function Sidebar() {
                       ? 'bg-white/12 text-white shadow-lg shadow-black/10'
                       : 'text-white/50 hover:text-white hover:bg-white/6'
                   )}
-                  title={collapsed ? item.label : undefined}
                 >
                   {/* Active indicator bar */}
                   {isActive && (
@@ -121,9 +93,7 @@ export default function Sidebar() {
                       isActive ? 'text-brand-accent' : 'text-white/40 group-hover:text-white/70'
                     )}
                   />
-                  {!collapsed && (
-                    <span className="animate-fade-in">{item.label}</span>
-                  )}
+                  <span className="animate-fade-in">{item.label}</span>
                 </Link>
               </li>
             );
@@ -133,21 +103,11 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-4 py-3 border-t border-white/8">
-        {!collapsed && (
-          <div className="mb-3 px-2">
-            <p className="text-[10px] text-white/20 font-medium">PT. Shalee Berkah Jaya</p>
-            <p className="text-[10px] text-white/15">R&D Division</p>
-          </div>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex w-full items-center justify-center gap-2 px-3 py-2 rounded-lg text-white/40 hover:text-white hover:bg-white/6 transition-all duration-200 text-sm"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          {!collapsed && <span className="text-xs">Tutup Sidebar</span>}
-        </button>
+        <div className="mb-3 px-2">
+          <p className="text-[10px] text-white/20 font-medium">PT. Shalee Berkah Jaya</p>
+          <p className="text-[10px] text-white/15">R&D Division</p>
+        </div>
       </div>
     </aside>
-    </>
   );
 }
