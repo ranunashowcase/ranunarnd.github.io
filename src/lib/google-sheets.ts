@@ -1,26 +1,35 @@
 import { google } from 'googleapis';
 
+let sheetsClientPromise: Promise<import('googleapis').sheets_v4.Sheets> | null = null;
+
 /**
  * Initialize and return an authenticated Google Sheets client.
  * Uses Service Account credentials from environment variables.
+ * Caches the PROMISE of the client to prevent rate-limiting on concurrent auth requests.
  */
 export async function getGoogleSheetsClient() {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  if (sheetsClientPromise) {
+    return sheetsClientPromise;
+  }
 
-  const authClient = await auth.getClient();
+  sheetsClientPromise = (async () => {
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
 
-  const sheets = google.sheets({
-    version: 'v4',
-    auth: authClient as import('google-auth-library').OAuth2Client,
-  });
+    const authClient = await auth.getClient();
 
-  return sheets;
+    return google.sheets({
+      version: 'v4',
+      auth: authClient as import('google-auth-library').OAuth2Client,
+    });
+  })();
+
+  return sheetsClientPromise;
 }
 
 /**
