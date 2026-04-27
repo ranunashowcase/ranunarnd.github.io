@@ -224,7 +224,7 @@ export default function OnProgressPage() {
                   <div className="h-40 bg-gray-100 relative overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={getDirectImageUrl(product.foto_produk_url)}
+                      src={getDirectImageUrl(product.foto_produk_url.split(',')[0].trim())}
                       alt={product.nama_produk}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -350,16 +350,14 @@ export default function OnProgressPage() {
               </div>
 
               <div>
-                <label className="form-label flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> File Thumbnail (.PNG/.JPG)</label>
-                <div className="flex items-center gap-3">
-                  <input type="file" accept="image/*" className="form-input p-1.5 text-sm" onChange={handleImageUpload} disabled={uploadingImage} />
-                  {uploadingImage && <Loader2 className="w-5 h-5 animate-spin text-brand-primary" />}
-                </div>
-                {formData.foto_produk_url && !uploadingImage && (
-                  <p className="text-xs text-brand-primary mt-1 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Gambar sudah tersimpan.
-                  </p>
-                )}
+                <label className="form-label flex items-center gap-1.5"><Image className="w-3.5 h-3.5" /> URL Gambar Thumbnail / Galeri</label>
+                <textarea 
+                  className="form-input min-h-[60px] resize-y text-sm" 
+                  placeholder="https://drive.google.com/..., https://imgur.com/... (Pisahkan dengan koma jika lebih dari satu gambar untuk membuat galeri)" 
+                  value={formData.foto_produk_url} 
+                  onChange={(e) => setFormData({ ...formData, foto_produk_url: e.target.value })} 
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Gunakan link Google Drive, Imgur, atau link gambar publik lainnya.</p>
               </div>
 
               <div>
@@ -398,15 +396,34 @@ export default function OnProgressPage() {
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedProduct(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            {/* Image */}
+            {/* Image Gallery */}
             {selectedProduct.foto_produk_url && (
-              <div className="h-56 bg-gray-100 relative overflow-hidden rounded-t-2xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={getDirectImageUrl(selectedProduct.foto_produk_url)}
-                  alt={selectedProduct.nama_produk}
-                  className="w-full h-full object-cover"
-                />
+              <div className="bg-gray-100 relative rounded-t-2xl border-b border-gray-200">
+                {selectedProduct.foto_produk_url.split(',').length > 1 ? (
+                  <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar p-4 gap-4 h-64 items-center">
+                    {selectedProduct.foto_produk_url.split(',').map((url, idx) => (
+                      <div key={idx} className="flex-none w-full sm:w-80 h-56 relative rounded-xl overflow-hidden shadow-sm snap-center bg-white border border-gray-200 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={getDirectImageUrl(url.trim())}
+                          alt={`${selectedProduct.nama_produk} - View ${idx + 1}`}
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-64 flex items-center justify-center p-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getDirectImageUrl(selectedProduct.foto_produk_url.trim())}
+                      alt={selectedProduct.nama_produk}
+                      className="max-w-full max-h-full object-contain drop-shadow-md"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
