@@ -4,9 +4,17 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { generateGroqCompletion, safeParseAiJson } from '@/lib/groq-service';
 import { getSheetData } from '@/lib/sheets-service';
+import { getCachedResponse, setCachedResponse } from '@/lib/ai-cache-service';
 
 export async function GET() {
   try {
+    // Check Cache first!
+    const cachedData = await getCachedResponse('trends-today');
+    if (cachedData) {
+      console.log('Serving Trends Today from AI Cache (Daily)');
+      return NextResponse.json({ success: true, data: cachedData, cached: true });
+    }
+
     // ====================================================
     // Fetch ALL context data in PARALLEL for speed
     // ====================================================
@@ -162,7 +170,10 @@ Berikan 7 produk dengan komposisi seperti di atas. Skor 1-100. RETURN ONLY JSON.
       // Ensure products is always an array
       if (!Array.isArray(parsed.products)) parsed.products = [];
       parsed.updated_at = new Date().toISOString();
-      return NextResponse.json({ success: true, data: parsed });
+      
+      await setCachedResponse('trends-today', parsed);
+
+      return NextResponse.json({ success: true, data: parsed, cached: false });
     } else {
       console.error('Failed to parse AI response:', resultString);
       return NextResponse.json(

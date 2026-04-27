@@ -100,8 +100,6 @@ export default function Header({ toggleSidebar, isSidebarOpen, isMobile }: { tog
                   <X className="w-4 h-4 text-red-400" />
                   Logout
                 </button>
-              </nav>
-
                 <Link
                   href="/admin/data-all"
                   className={cn(
