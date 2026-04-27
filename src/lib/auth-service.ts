@@ -108,7 +108,7 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<{ token: string; user: UserPublic }> {
-  await initializeSheetHeaders(SHEET_NAME, HEADERS);
+  await initializeUsersSheet();
 
   const users = await getSheetData<UserRecord>(SHEET_NAME);
   const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
