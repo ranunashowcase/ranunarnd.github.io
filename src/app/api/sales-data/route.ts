@@ -28,60 +28,56 @@ function getVal(row: Record<string, any>, ...keys: string[]): string {
 
 export async function GET() {
   try {
-    // Try to read sales data
+    // Fetch data
     let salesData: Record<string, string | number>[] = [];
-    try {
-      salesData = await getSheetData<Record<string, string | number>>(SHEET_NAME);
-    } catch {
-      salesData = [];
-    }
+    try { salesData = await getSheetData<Record<string, string | number>>(SHEET_NAME); } catch { salesData = []; }
 
-    // Also get MASTER SKU for image URLs and product details
     let masterSku: Record<string, string>[] = [];
-    try {
-      masterSku = await getSheetData<Record<string, string>>('MASTER SKU');
-    } catch {
-      masterSku = [];
-    }
+    try { masterSku = await getSheetData<Record<string, string>>('MASTER SKU'); } catch { masterSku = []; }
 
-    // Build a lookup map: barcode/sku -> product info from MASTER SKU
-    const skuMap = new Map<string, { nama_barang: string; image_url: string; barcode: string; sku: string }>();
-    masterSku.forEach((row) => {
-      let barcode = getVal(row, 'barcode_produk', 'Barcode Produk', 'BARCODE', 'Barcode', 'barcode');
-      const sku = getVal(row, 'sku_produk', 'SKU Produk', 'SKU', 'Sku', 'sku');
-      const nama = getVal(row, 'nama_barang', 'Nama Barang', 'NAMA BARANG', 'Nama Produk', 'nama_produk');
-      const image = getVal(row, 'image_url', 'Image URL', 'foto_url', 'IMAGE URL', 'Image');
-
-      if (!barcode) barcode = sku; // Mirror barcode dgn SKU
-
-      if (barcode) skuMap.set(barcode, { nama_barang: nama, image_url: image, barcode, sku });
-      if (sku) skuMap.set(sku, { nama_barang: nama, image_url: image, barcode, sku });
-    });
-
-    // Aggregate sales per product
+    // =====================================================
+    // Aggregate by PRODUCT NAME (not SKU — because MASTER SKU
+    // has multiple SKU codes per product: MZ600, MZ600CTN, etc.)
+    // =====================================================
     const productSales = new Map<string, {
       nama_barang: string;
-      sku_produk: string;
-      barcode_produk: string;
+      sku_produk: string;       // Primary/first SKU
+      barcode_produk: string;   // Primary/first barcode
       total_qty: number;
       image_url: string;
       daily: Map<string, number>;
     }>();
 
-    // Inisialisasi semua produk dari Master SKU agar tampil meski sales 0
+    // Build lookup: barcode/sku → nama_barang (from MASTER SKU)
+    const codeToNama = new Map<string, string>();
+    const skuPerProdukMap = new Map<string, string>(); // SKU Per Produk → Nama
+    
     masterSku.forEach((row) => {
-      let barcode = getVal(row, 'barcode_produk', 'Barcode Produk', 'BARCODE', 'Barcode', 'barcode');
-      const sku = getVal(row, 'sku_produk', 'SKU Produk', 'SKU', 'Sku', 'sku');
-      const nama = getVal(row, 'nama_barang', 'Nama Barang', 'NAMA BARANG', 'Nama Produk', 'nama_produk');
-      const image = getVal(row, 'image_url', 'Image URL', 'foto_url', 'IMAGE URL', 'Image');
+      const barcode = getVal(row, 'Barcode Produk', 'barcode_produk', 'BARCODE', 'Barcode', 'barcode');
+      const sku = getVal(row, 'SKU Produk', 'sku_produk', 'SKU', 'Sku', 'sku');
+      const skuPer = getVal(row, 'SKU Per Produk', 'sku_per_produk');
+      const nama = getVal(row, 'Nama Barang', 'nama_barang', 'NAMA BARANG', 'Nama Produk');
+      const image = getVal(row, 'Image URL', 'image_url', 'foto_url');
 
-      if (!barcode) barcode = sku; // Mirror barcode dgn SKU
+      if (!nama) return;
 
-      const key = sku || barcode;
-      if (key && !productSales.has(key)) {
-        productSales.set(key, {
+      // Map all codes to this product name
+      if (barcode) codeToNama.set(barcode, nama);
+      if (sku) codeToNama.set(sku, nama);
+      if (skuPer) {
+        codeToNama.set(skuPer, nama);
+        skuPerProdukMap.set(skuPer, nama);
+      }
+      // Handle combo SKUs like "AJWA500&MED500" — map each part too
+      if (sku && sku.includes('&')) {
+        sku.split('&').forEach(part => { if (part.trim()) codeToNama.set(part.trim(), nama); });
+      }
+
+      // Initialize product entry (only once per unique name)
+      if (!productSales.has(nama)) {
+        productSales.set(nama, {
           nama_barang: nama,
-          sku_produk: sku,
+          sku_produk: skuPer || sku,  // Prefer SKU Per Produk (individual, not CTN)
           barcode_produk: barcode,
           total_qty: 0,
           image_url: image,
@@ -90,43 +86,34 @@ export async function GET() {
       }
     });
 
+    // Aggregate sales from PEMESANAN PRODUK
     salesData.forEach((row) => {
-      // Smart read — handles ALL column name variants from sheet
-      let barcode = getVal(row, 'BARCODE', 'Barcode', 'barcode', 'Barcode Produk', 'barcode_produk');
-      const skuRaw = getVal(row, 'SKU', 'Sku', 'sku', 'SKU Produk', 'sku_produk', 'Nomor Referensi SKU', 'SKU Induk') || barcode;
-      const sku = skuRaw;
+      const barcode = getVal(row, 'Barcode', 'BARCODE', 'barcode', 'Barcode Produk', 'barcode_produk');
+      const sku = getVal(row, 'SKU', 'Sku', 'sku', 'SKU Produk', 'sku_produk', 'Nomor Referensi SKU');
+      const namaFromOrder = getVal(row, 'Nama Barang', 'NAMA BARANG', 'nama_barang', 'Nama Produk', 'nama_produk');
       
-      if (!barcode) barcode = sku; // Mirror barcode dgn SKU
-      
-      const tanggalRaw = getVal(row, 'TANGGAL', 'Tanggal', 'tanggal', 'Waktu Pesanan Dibuat', 'Date', 'date');
-      const tanggal = tanggalRaw.split(' ')[0] || ''; // Ambil YYYY-MM-DD saja
+      const tanggalRaw = getVal(row, 'Tanggal', 'TANGGAL', 'tanggal', 'Waktu Pesanan Dibuat', 'Date');
+      const tanggal = tanggalRaw.split(' ')[0] || '';
 
-      const qtyRaw = getVal(row, 'QTY', 'Qty', 'qty', 'Jumlah', 'jumlah', 'Kuantitas', 'Quantity') || '0';
+      const qtyRaw = getVal(row, 'Qty', 'QTY', 'qty', 'Jumlah', 'jumlah', 'Kuantitas') || '0';
       const qty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
 
-      const namaFromOrder = getVal(row, 'NAMA BARANG', 'Nama Barang', 'nama_barang', 'Nama Produk', 'nama_produk');
+      // Resolve product name: try lookup by SKU, barcode, or use nama from order directly
+      const nama = codeToNama.get(sku) || codeToNama.get(barcode) || namaFromOrder;
+      if (!nama || qty <= 0) return;
 
-      // Use sku as primary key to perfectly match the master initialization
-      const key = sku || barcode;
-      if (!key) return;
-
-      // Lookup in master SKU — mirror barcode<->sku
-      const masterInfo = skuMap.get(barcode) || skuMap.get(sku);
-      const nama = masterInfo?.nama_barang || namaFromOrder || key;
-      const imageUrl = masterInfo?.image_url || '';
-
-      if (!productSales.has(key)) {
-        productSales.set(key, {
+      if (!productSales.has(nama)) {
+        productSales.set(nama, {
           nama_barang: nama,
-          sku_produk: masterInfo?.sku || sku,
-          barcode_produk: masterInfo?.barcode || barcode,
+          sku_produk: sku,
+          barcode_produk: barcode,
           total_qty: 0,
-          image_url: imageUrl,
+          image_url: '',
           daily: new Map(),
         });
       }
 
-      const entry = productSales.get(key)!;
+      const entry = productSales.get(nama)!;
       entry.total_qty += qty;
 
       if (tanggal) {
