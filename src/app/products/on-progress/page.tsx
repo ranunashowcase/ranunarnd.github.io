@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FlaskConical, Loader2, Plus, Image, Layers, Ruler, FileImage, Clock, BrainCircuit, X, ChevronRight, Edit, Trash2, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { FlaskConical, Loader2, Plus, Image, Layers, Ruler, FileImage, Clock, BrainCircuit, X, ChevronRight, Edit, Trash2, CheckCircle2, RefreshCw, Search, TrendingUp, ShieldAlert, Target, Users, BarChart3, Microscope } from 'lucide-react';
 import { OnProgressProduct } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 import { getDirectImageUrl } from '@/lib/utils';
@@ -36,12 +36,37 @@ function getPhaseColor(fase: string): string {
   return phase?.color || phases[0].color;
 }
 
+// Research data interface
+interface ResearchData {
+  analisis_pasar: string;
+  kompetitor: string;
+  target_market: string;
+  trend_forecast: string;
+  rekomendasi_strategi: string;
+  risk_assessment: string;
+  estimated_lifespan: string;
+  skor_potensi: number;
+  verdict: string;
+}
+
+interface ResearchMeta {
+  created_at: string | null;
+  last_refreshed_at: string | null;
+  refresh_remaining: number;
+}
+
 export default function OnProgressPage() {
   const [products, setProducts] = useState<OnProgressProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<OnProgressProduct | null>(null);
   const { showToast } = useToast();
+
+  // Research state
+  const [research, setResearch] = useState<ResearchData | null>(null);
+  const [researchMeta, setResearchMeta] = useState<ResearchMeta | null>(null);
+  const [researchLoading, setResearchLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = () => {
     setLoading(true);
@@ -53,6 +78,60 @@ export default function OnProgressPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   };
+
+  // Fetch research when a product is selected
+  const fetchResearch = useCallback(async (productId: string) => {
+    setResearchLoading(true);
+    setResearch(null);
+    setResearchMeta(null);
+    try {
+      const res = await fetch(`/api/products/on-progress/research?id=${productId}`);
+      const json = await res.json();
+      if (json.success) {
+        setResearch(json.data);
+        setResearchMeta(json.meta);
+      }
+    } catch {
+      console.error('Failed to fetch research');
+    } finally {
+      setResearchLoading(false);
+    }
+  }, []);
+
+  // Refresh research (manual, limited 2x/day)
+  const handleRefreshResearch = async (productId: string) => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/products/on-progress/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setResearch(json.data);
+        setResearchMeta(json.meta);
+        showToast('Riset berhasil di-refresh!', 'success');
+      } else {
+        showToast(json.error || 'Gagal refresh riset', 'error');
+      }
+    } catch {
+      showToast('Error koneksi saat refresh riset', 'error');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // When selectedProduct changes, fetch research
+  useEffect(() => {
+    if (selectedProduct?.id) {
+      fetchResearch(selectedProduct.id);
+    } else {
+      setResearch(null);
+      setResearchMeta(null);
+    }
+  }, [selectedProduct, fetchResearch]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -478,12 +557,12 @@ export default function OnProgressPage() {
                 </div>
               )}
 
-              {/* AI Analysis */}
+              {/* AI Quick Forecast */}
               {selectedProduct.ai_forecast && selectedProduct.ai_forecast !== 'Analisis tidak tersedia' && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <BrainCircuit className="w-4 h-4 text-indigo-500" />
-                    <p className="text-[10px] text-indigo-500 uppercase tracking-wider font-bold">AI Forecast</p>
+                    <p className="text-[10px] text-indigo-500 uppercase tracking-wider font-bold">AI Quick Forecast</p>
                     {selectedProduct.ai_lifespan && (
                       <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded ml-auto">
                         Lifespan: {selectedProduct.ai_lifespan}
@@ -493,6 +572,140 @@ export default function OnProgressPage() {
                   <p className="text-sm text-gray-700 leading-relaxed">{selectedProduct.ai_forecast}</p>
                 </div>
               )}
+
+              {/* ======================================== */}
+              {/* AI Deep Research Section */}
+              {/* ======================================== */}
+              <div className="border-t border-gray-100 pt-5 mt-2">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg">
+                      <Microscope className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">AI Deep Research</h3>
+                      <p className="text-[10px] text-gray-400">Riset mendalam otomatis oleh AI</p>
+                    </div>
+                  </div>
+
+                  {/* Refresh button */}
+                  {research && researchMeta && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-400">
+                        {researchMeta.refresh_remaining}/{2} refresh tersisa
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRefreshResearch(selectedProduct.id);
+                        }}
+                        disabled={refreshing || researchMeta.refresh_remaining <= 0}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${
+                          researchMeta.refresh_remaining <= 0
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                        }`}
+                        title={researchMeta.refresh_remaining <= 0 ? 'Batas refresh hari ini sudah habis' : 'Refresh riset AI'}
+                      >
+                        <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Research Loading */}
+                {researchLoading && (
+                  <div className="flex flex-col items-center justify-center py-12 bg-gradient-to-br from-gray-50 to-emerald-50/30 rounded-xl border border-gray-100">
+                    <div className="relative mb-4">
+                      <div className="w-12 h-12 border-4 border-emerald-100 rounded-full" />
+                      <div className="absolute inset-0 w-12 h-12 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-700">AI sedang melakukan riset...</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Menganalisis pasar, kompetitor, dan tren untuk produk ini</p>
+                  </div>
+                )}
+
+                {/* Research Content */}
+                {!researchLoading && research && (
+                  <div className="space-y-3">
+                    {/* Score & Verdict Bar */}
+                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`text-2xl font-black ${
+                            (research.skor_potensi || 0) >= 75 ? 'text-emerald-600' :
+                            (research.skor_potensi || 0) >= 50 ? 'text-amber-600' : 'text-red-500'
+                          }`}>
+                            {research.skor_potensi || 0}
+                            <span className="text-xs font-semibold text-gray-400">/100</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Skor Potensi</p>
+                            <p className="text-xs text-gray-600">{research.estimated_lifespan || '-'}</p>
+                          </div>
+                        </div>
+                        <div className="max-w-[55%]">
+                          <p className="text-[11px] font-medium text-emerald-800 leading-relaxed">{research.verdict || '-'}</p>
+                        </div>
+                      </div>
+                      {/* Score bar visual */}
+                      <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden mt-1">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            (research.skor_potensi || 0) >= 75 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' :
+                            (research.skor_potensi || 0) >= 50 ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-gradient-to-r from-red-400 to-red-600'
+                          }`}
+                          style={{ width: `${Math.min(100, research.skor_potensi || 0)}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Research Sections */}
+                    {[
+                      { icon: BarChart3, label: 'Analisis Pasar', content: research.analisis_pasar, color: 'text-blue-600 bg-blue-50' },
+                      { icon: Users, label: 'Kompetitor', content: research.kompetitor, color: 'text-orange-600 bg-orange-50' },
+                      { icon: Target, label: 'Target Market', content: research.target_market, color: 'text-pink-600 bg-pink-50' },
+                      { icon: TrendingUp, label: 'Trend Forecast', content: research.trend_forecast, color: 'text-indigo-600 bg-indigo-50' },
+                      { icon: Search, label: 'Rekomendasi Strategi', content: research.rekomendasi_strategi, color: 'text-emerald-600 bg-emerald-50' },
+                      { icon: ShieldAlert, label: 'Risk Assessment', content: research.risk_assessment, color: 'text-red-600 bg-red-50' },
+                    ].map((section) => (
+                      section.content && section.content !== 'Data tidak tersedia.' && (
+                        <div key={section.label} className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`p-1 rounded-md ${section.color}`}>
+                              <section.icon className="w-3.5 h-3.5" />
+                            </div>
+                            <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500">{section.label}</p>
+                          </div>
+                          <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-line">{section.content}</p>
+                        </div>
+                      )
+                    ))}
+
+                    {/* Meta info */}
+                    {researchMeta && (
+                      <div className="flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t border-gray-50">
+                        <span>
+                          Pertama di-generate: {researchMeta.created_at ? new Date(researchMeta.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </span>
+                        <span>
+                          Terakhir di-refresh: {researchMeta.last_refreshed_at ? new Date(researchMeta.last_refreshed_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* No research yet & not loading */}
+                {!researchLoading && !research && (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-100">
+                    <Microscope className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Riset belum tersedia</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Riset akan otomatis di-generate saat pertama kali membuka detail produk</p>
+                  </div>
+                )}
+              </div>
 
               {/* Mockup / Full Appearance Link */}
               {selectedProduct.mockup_url && (
