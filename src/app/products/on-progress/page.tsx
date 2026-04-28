@@ -557,22 +557,6 @@ export default function OnProgressPage() {
                 </div>
               )}
 
-              {/* AI Quick Forecast */}
-              {selectedProduct.ai_forecast && selectedProduct.ai_forecast !== 'Analisis tidak tersedia' && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BrainCircuit className="w-4 h-4 text-indigo-500" />
-                    <p className="text-[10px] text-indigo-500 uppercase tracking-wider font-bold">AI Quick Forecast</p>
-                    {selectedProduct.ai_lifespan && (
-                      <span className="text-[10px] font-semibold text-purple-600 bg-purple-100 px-2 py-0.5 rounded ml-auto">
-                        Lifespan: {selectedProduct.ai_lifespan}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-700 leading-relaxed">{selectedProduct.ai_forecast}</p>
-                </div>
-              )}
-
               {/* ======================================== */}
               {/* AI Deep Research Section */}
               {/* ======================================== */}
