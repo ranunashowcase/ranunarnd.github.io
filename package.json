@@ -12,6 +12,7 @@
     "@google/generative-ai": "^0.24.1",
     "ai": "^6.0.158",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
     "googleapis": "^171.4.0",
     "groq-sdk": "^1.1.2",
     "jsonwebtoken": "^9.0.3",

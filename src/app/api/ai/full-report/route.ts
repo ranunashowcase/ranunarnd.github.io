@@ -101,8 +101,8 @@ export async function GET() {
     // Sales aggregation
     const salesMap = new Map<string, number>();
     salesData.forEach((row: any) => {
-      const nama = String(row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || '').trim();
-      const qtyRaw = String(row.qty || row['Qty'] || row['QTY'] || row['Jumlah'] || '0');
+      const nama = String(row['NAMA BARANG'] || row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || row.nama_produk || '').trim();
+      const qtyRaw = String(row['QTY'] || row.qty || row['Qty'] || row['Jumlah'] || row['Kuantitas'] || '0');
       const qty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
       if (nama && qty > 0) {
         salesMap.set(nama, (salesMap.get(nama) || 0) + qty);
@@ -156,7 +156,7 @@ ${rndData.map((r: any) => `- ${r.nama_produk || 'N/A'} | Kategori: ${r.kategori 
 ${Object.entries(rndPhaseDistribution).map(([phase, count]) => `- ${phase}: ${count} produk`).join('\n')}
 
 === DAFTAR PRODUK LIVE (MASTER SKU, maks 30) ===
-${skuData.slice(0, 30).map((s: any) => `- ${s.nama_barang || s['Nama Barang'] || 'N/A'} (SKU: ${s.sku_produk || s['SKU Produk'] || 'N/A'})`).join('\n')}
+${skuData.slice(0, 30).map((s: any) => `- ${s['NAMA BARANG'] || s.nama_barang || s['Nama Barang'] || s['Nama Produk'] || 'N/A'} (SKU: ${s['SKU'] || s.sku_produk || s['SKU Produk'] || 'N/A'})`).join('\n')}
 
 === MARKET WATCH (Semua) ===
 ${marketData.map((m: any) => `- ${m['Nama Ide/Produk'] || m['Nama Produk'] || 'N/A'} | Tipe: ${m['Tipe Trend'] || 'N/A'} | Skor AI: ${m['AI Layak Skor (1-100)'] || 'N/A'} | Durasi: ${m['AI Estimasi Durasi Trend'] || 'N/A'} | Rekomendasi: ${m['AI Rekomendasi'] || 'N/A'}`).join('\n')}

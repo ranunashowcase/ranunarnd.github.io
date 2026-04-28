@@ -1,35 +1,48 @@
 import { NextResponse } from 'next/server';
-import { getGoogleSheetsClient, getSpreadsheetId } from '@/lib/google-sheets';
+import { getSheetData } from '@/lib/sheets-service';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+/**
+ * Smart value extractor — tries multiple column name variants (case-insensitive).
+ */
+function getVal(row: Record<string, any>, ...keys: string[]): string {
+  for (const key of keys) {
+    if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+      return String(row[key]).trim();
+    }
+  }
+  const rowKeys = Object.keys(row);
+  for (const key of keys) {
+    const lower = key.toLowerCase();
+    const found = rowKeys.find(k => k.toLowerCase() === lower);
+    if (found && row[found] !== undefined && row[found] !== null && String(row[found]).trim() !== '') {
+      return String(row[found]).trim();
+    }
+  }
+  return '';
+}
+
 export async function GET() {
   try {
-    const sheets = await getGoogleSheetsClient();
-    const spreadsheetId = getSpreadsheetId();
-
     // 1. Fetch MASTER SKU
-    let masterSkuRows: any[][] = [];
+    let masterSkuRows: Record<string, any>[] = [];
     try {
-      const msRes = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: `MASTER SKU!A2:Z1000` // Assuming row 1 is header
-      });
-      masterSkuRows = msRes.data.values || [];
-    } catch (e) {
+      masterSkuRows = await getSheetData<Record<string, any>>('MASTER SKU');
+    } catch {
       console.warn('MASTER SKU sheet not found or empty.');
     }
 
-    // Map Master SKU: Key is SKU Produk (index 1), Value is { name: index 3, qty: index 4 }
-    // Also map Barcode Produk (index 0) to handle both cases
+    // Map Master SKU: key by SKU and Barcode
     const skuMap = new Map<string, { name: string; qty: number }>();
     
     masterSkuRows.forEach(row => {
-      const barcode = row[0]?.trim();
-      const sku = row[1]?.trim();
-      const name = row[3] || 'Unknown Product';
-      const qty = parseInt(row[4] || '1', 10);
+      let barcode = getVal(row, 'barcode_produk', 'Barcode Produk', 'BARCODE', 'Barcode', 'barcode');
+      const sku = getVal(row, 'sku_produk', 'SKU Produk', 'SKU', 'Sku', 'sku');
+      const name = getVal(row, 'nama_barang', 'Nama Barang', 'NAMA BARANG', 'Nama Produk') || 'Unknown Product';
+      const qtyRaw = getVal(row, 'qty', 'Qty', 'QTY', 'qty_per_carton') || '1';
+      const qty = parseInt(qtyRaw, 10);
       
       const itemData = { name, qty: isNaN(qty) ? 1 : qty };
       
@@ -38,30 +51,25 @@ export async function GET() {
     });
 
     // 2. Fetch PEMESANAN PRODUK
-    let orderRows: any[][] = [];
+    let orderRows: Record<string, any>[] = [];
     try {
-      const orderRes = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: `PEMESANAN PRODUK!A2:Z` // Skip header
-      });
-      orderRows = orderRes.data.values || [];
-    } catch (e) {
+      orderRows = await getSheetData<Record<string, any>>('PEMESANAN PRODUK');
+    } catch {
       console.warn('PEMESANAN PRODUK sheet not found or empty.');
     }
 
-    // 3. Aggregate Sales
-    // Column 14: Nomor Referensi SKU
-    // Column 18: Jumlah (Quantity ordered)
-    // Sometimes 'SKU Induk' column 12 is used. We'll use 14 as primary, fallback to 12.
+    // 3. Aggregate Sales using smart column reading
     const salesMap = new Map<string, number>();
 
     orderRows.forEach(row => {
-      let refSku = row[14]?.trim() || '';
+      // Try to find SKU/barcode from any possible column name
+      let refSku = getVal(row, 'SKU', 'Sku', 'sku', 'SKU Produk', 'sku_produk', 'Nomor Referensi SKU', 'SKU Induk');
       if (!refSku) {
-        refSku = row[12]?.trim() || '';
+        refSku = getVal(row, 'BARCODE', 'Barcode', 'barcode', 'Barcode Produk', 'barcode_produk');
       }
       
-      const orderedQty = parseInt(row[18] || '0', 10);
+      const qtyRaw = getVal(row, 'QTY', 'Qty', 'qty', 'Jumlah', 'jumlah', 'Kuantitas', 'Quantity') || '0';
+      const orderedQty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
       
       if (refSku && orderedQty > 0) {
         const masterInfo = skuMap.get(refSku);
@@ -70,8 +78,8 @@ export async function GET() {
           const currentTotal = salesMap.get(masterInfo.name) || 0;
           salesMap.set(masterInfo.name, currentTotal + totalPacks);
         } else {
-          // If product not found in Master, just track it by its SKU name and assume Qty = 1
-          const productName = row[13] || refSku; // Nama Produk
+          // If product not found in Master, track by name from order
+          const productName = getVal(row, 'NAMA BARANG', 'Nama Barang', 'nama_barang', 'Nama Produk', 'nama_produk') || refSku;
           const currentTotal = salesMap.get(productName) || 0;
           salesMap.set(productName, currentTotal + orderedQty);
         }
@@ -99,3 +107,4 @@ export async function GET() {
     return NextResponse.json({ success: false, data: [] }, { status: 500 });
   }
 }
+

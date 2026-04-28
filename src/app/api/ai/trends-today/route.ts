@@ -54,7 +54,7 @@ export async function GET() {
     let skuContext = '';
     if (masterSkuResult.status === 'fulfilled' && masterSkuResult.value.length > 0) {
       const produkList = masterSkuResult.value.slice(0, 20).map((row) => {
-        return row.nama_barang || row['Nama Barang'] || '';
+        return row.nama_barang || row['Nama Barang'] || row['NAMA BARANG'] || row['Nama Produk'] || '';
       }).filter(Boolean);
       if (produkList.length > 0) {
         skuContext = `Produk live perusahaan: ${produkList.join(', ')}`;
@@ -68,8 +68,8 @@ export async function GET() {
     if (salesResult.status === 'fulfilled' && salesResult.value.length > 0) {
       const salesMap = new Map<string, number>();
       salesResult.value.forEach((row) => {
-        const nama = String(row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || '').trim();
-        const qtyRaw = String(row.qty || row['Qty'] || row['QTY'] || row['Jumlah'] || '0');
+        const nama = String(row['NAMA BARANG'] || row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || row.nama_produk || '').trim();
+        const qtyRaw = String(row['QTY'] || row.qty || row['Qty'] || row['Jumlah'] || row['Kuantitas'] || '0');
         const qty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
         if (nama && qty > 0) {
           salesMap.set(nama, (salesMap.get(nama) || 0) + qty);

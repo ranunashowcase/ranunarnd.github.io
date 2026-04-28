@@ -4,6 +4,28 @@ import { getSheetData, initializeSheetHeaders, appendSheetData } from '@/lib/she
 
 const SHEET_NAME = 'PEMESANAN PRODUK';
 
+/**
+ * Smart value extractor — tries multiple column name variants (case-insensitive).
+ * Handles: BARCODE, Barcode, barcode, Barcode Produk, barcode_produk, etc.
+ */
+function getVal(row: Record<string, any>, ...keys: string[]): string {
+  for (const key of keys) {
+    if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+      return String(row[key]).trim();
+    }
+  }
+  // Case-insensitive fallback
+  const rowKeys = Object.keys(row);
+  for (const key of keys) {
+    const lower = key.toLowerCase();
+    const found = rowKeys.find(k => k.toLowerCase() === lower);
+    if (found && row[found] !== undefined && row[found] !== null && String(row[found]).trim() !== '') {
+      return String(row[found]).trim();
+    }
+  }
+  return '';
+}
+
 export async function GET() {
   try {
     // Try to read sales data
@@ -25,10 +47,10 @@ export async function GET() {
     // Build a lookup map: barcode/sku -> product info from MASTER SKU
     const skuMap = new Map<string, { nama_barang: string; image_url: string; barcode: string; sku: string }>();
     masterSku.forEach((row) => {
-      let barcode = String(row.barcode_produk || row['Barcode Produk'] || '').trim();
-      const sku = String(row.sku_produk || row['SKU Produk'] || '').trim();
-      const nama = String(row.nama_barang || row['Nama Barang'] || '');
-      const image = String(row.image_url || row['Image URL'] || row.foto_url || '');
+      let barcode = getVal(row, 'barcode_produk', 'Barcode Produk', 'BARCODE', 'Barcode', 'barcode');
+      const sku = getVal(row, 'sku_produk', 'SKU Produk', 'SKU', 'Sku', 'sku');
+      const nama = getVal(row, 'nama_barang', 'Nama Barang', 'NAMA BARANG', 'Nama Produk', 'nama_produk');
+      const image = getVal(row, 'image_url', 'Image URL', 'foto_url', 'IMAGE URL', 'Image');
 
       if (!barcode) barcode = sku; // Mirror barcode dgn SKU
 
@@ -48,10 +70,10 @@ export async function GET() {
 
     // Inisialisasi semua produk dari Master SKU agar tampil meski sales 0
     masterSku.forEach((row) => {
-      let barcode = String(row.barcode_produk || row['Barcode Produk'] || '').trim();
-      const sku = String(row.sku_produk || row['SKU Produk'] || '').trim();
-      const nama = String(row.nama_barang || row['Nama Barang'] || '');
-      const image = String(row.image_url || row['Image URL'] || row.foto_url || '');
+      let barcode = getVal(row, 'barcode_produk', 'Barcode Produk', 'BARCODE', 'Barcode', 'barcode');
+      const sku = getVal(row, 'sku_produk', 'SKU Produk', 'SKU', 'Sku', 'sku');
+      const nama = getVal(row, 'nama_barang', 'Nama Barang', 'NAMA BARANG', 'Nama Produk', 'nama_produk');
+      const image = getVal(row, 'image_url', 'Image URL', 'foto_url', 'IMAGE URL', 'Image');
 
       if (!barcode) barcode = sku; // Mirror barcode dgn SKU
 
@@ -69,25 +91,26 @@ export async function GET() {
     });
 
     salesData.forEach((row) => {
-      let barcode = String(row.barcode_produk || row['Barcode Produk'] || '').trim();
-      const skuRaw = String(row.sku_produk || row['SKU Produk'] || row['Nomor Referensi SKU'] || row['SKU Induk'] || barcode);
-      const sku = skuRaw.trim();
+      // Smart read — handles ALL column name variants from sheet
+      let barcode = getVal(row, 'BARCODE', 'Barcode', 'barcode', 'Barcode Produk', 'barcode_produk');
+      const skuRaw = getVal(row, 'SKU', 'Sku', 'sku', 'SKU Produk', 'sku_produk', 'Nomor Referensi SKU', 'SKU Induk') || barcode;
+      const sku = skuRaw;
       
       if (!barcode) barcode = sku; // Mirror barcode dgn SKU
       
-      const tanggalObj = row.tanggal || row['Tanggal'] || row['Waktu Pesanan Dibuat'] || '';
-      const tanggal = String(tanggalObj).split(' ')[0] || ''; // Ambill YYYY-MM-DD saja
+      const tanggalRaw = getVal(row, 'TANGGAL', 'Tanggal', 'tanggal', 'Waktu Pesanan Dibuat', 'Date', 'date');
+      const tanggal = tanggalRaw.split(' ')[0] || ''; // Ambil YYYY-MM-DD saja
 
-      const qtyRaw = String(row.qty || row['Qty'] || row['QTY'] || row['Jumlah'] || 0);
+      const qtyRaw = getVal(row, 'QTY', 'Qty', 'qty', 'Jumlah', 'jumlah', 'Kuantitas', 'Quantity') || '0';
       const qty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
 
-      const namaFromOrder = String(row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || '');
+      const namaFromOrder = getVal(row, 'NAMA BARANG', 'Nama Barang', 'nama_barang', 'Nama Produk', 'nama_produk');
 
       // Use sku as primary key to perfectly match the master initialization
       const key = sku || barcode;
       if (!key) return;
 
-      // Lookup in master SKU
+      // Lookup in master SKU — mirror barcode<->sku
       const masterInfo = skuMap.get(barcode) || skuMap.get(sku);
       const nama = masterInfo?.nama_barang || namaFromOrder || key;
       const imageUrl = masterInfo?.image_url || '';

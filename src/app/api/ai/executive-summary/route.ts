@@ -24,8 +24,15 @@ export async function GET() {
     const infoData = info.status === 'fulfilled' ? info.value : [];
 
     // Calculate quick stats
-    const totalSalesVol = salesData.reduce((acc, curr) => acc + (Number(curr.Qty) || Number(curr.qty) || 0), 0);
-    const topSales = [...salesData].sort((a, b) => (Number(b.Qty) || 0) - (Number(a.Qty) || 0)).slice(0, 3);
+    const totalSalesVol = salesData.reduce((acc: number, curr: any) => {
+      const qtyRaw = String(curr['QTY'] || curr.qty || curr['Qty'] || curr['Jumlah'] || curr['Kuantitas'] || '0');
+      return acc + (parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0);
+    }, 0);
+    const topSales = [...salesData].sort((a: any, b: any) => {
+      const qA = parseInt(String(a['QTY'] || a.qty || a['Qty'] || a['Jumlah'] || '0').replace(/\D/g, ''), 10) || 0;
+      const qB = parseInt(String(b['QTY'] || b.qty || b['Qty'] || b['Jumlah'] || '0').replace(/\D/g, ''), 10) || 0;
+      return qB - qA;
+    }).slice(0, 3);
     const activeRnd = rndData.filter(r => !r.fase_development?.toLowerCase().includes('selesai') && !r.fase_development?.toLowerCase().includes('rilis')).length;
     
     // Prepare concise context for AI
@@ -37,7 +44,7 @@ export async function GET() {
 - Informasi & Riset Pasar yang dikumpulkan: ${infoData.length} artikel/ide
 
 [Top 3 Produk Penjualan]
-${topSales.map(s => `- ${s['Nama Produk'] || s.nama_barang}: ${s.Qty || s.qty} pcs`).join('\n')}
+${topSales.map((s: any) => `- ${s['NAMA BARANG'] || s.nama_barang || s['Nama Barang'] || s['Nama Produk'] || s.nama_produk || 'N/A'}: ${s['QTY'] || s.qty || s['Qty'] || s['Jumlah'] || 0} pcs`).join('\n')}
 
 [R&D Terkini (Maks 5)]
 ${rndData.slice(-5).map(r => `- ${r.nama_produk} (Fase: ${r.fase_development}, Rilis: ${r.target_rilis})`).join('\n')}

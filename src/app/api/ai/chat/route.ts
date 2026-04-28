@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     let skuContext = '';
     if (masterSkuResult.status === 'fulfilled' && masterSkuResult.value.length > 0) {
       const skuList = masterSkuResult.value.slice(0, 30).map((row) => {
-        const nama = row.nama_barang || row['Nama Barang'] || '';
-        const sku = row.sku_produk || row['SKU Produk'] || '';
-        const barcode = row.barcode_produk || row['Barcode Produk'] || '';
+        const nama = row['NAMA BARANG'] || row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || '';
+        const sku = row['SKU'] || row.sku_produk || row['SKU Produk'] || '';
+        const barcode = row['BARCODE'] || row.barcode_produk || row['Barcode Produk'] || '';
         return `${nama} (SKU: ${sku}, Barcode: ${barcode})`;
       }).filter(s => s.trim() !== ' (SKU: , Barcode: )');
       if (skuList.length > 0) {
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
       // Aggregate sales per product
       const salesMap = new Map<string, { nama: string; total: number }>();
       salesResult.value.forEach((row) => {
-        const nama = String(row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || '').trim();
-        const qtyRaw = String(row.qty || row['Qty'] || row['QTY'] || row['Jumlah'] || '0');
+        const nama = String(row['NAMA BARANG'] || row.nama_barang || row['Nama Barang'] || row['Nama Produk'] || row.nama_produk || '').trim();
+        const qtyRaw = String(row['QTY'] || row.qty || row['Qty'] || row['Jumlah'] || row['Kuantitas'] || '0');
         const qty = parseInt(qtyRaw.replace(/\D/g, ''), 10) || 0;
         if (!nama) return;
         const existing = salesMap.get(nama);
