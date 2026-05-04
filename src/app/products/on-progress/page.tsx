@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { FlaskConical, Loader2, Plus, Image, Layers, Ruler, FileImage, Clock, BrainCircuit, X, ChevronRight, Edit, Trash2, CheckCircle2, RefreshCw, Search, TrendingUp, ShieldAlert, Target, Users, BarChart3, Microscope } from 'lucide-react';
+import { FlaskConical, Loader2, Plus, Image, Layers, Ruler, FileImage, Clock, BrainCircuit, X, ChevronRight, ChevronLeft, Edit, Trash2, CheckCircle2, RefreshCw, Search, TrendingUp, ShieldAlert, Target, Users, BarChart3, Microscope, Maximize2, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { OnProgressProduct } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 import { getDirectImageUrl } from '@/lib/utils';
@@ -67,6 +67,15 @@ export default function OnProgressPage() {
   const [researchMeta, setResearchMeta] = useState<ResearchMeta | null>(null);
   const [researchLoading, setResearchLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Fullscreen image viewer state
+  const [viewerImages, setViewerImages] = useState<{title: string; url: string}[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [showViewer, setShowViewer] = useState(false);
+  const [viewerScale, setViewerScale] = useState(1);
+  const [viewerPan, setViewerPan] = useState({x: 0, y: 0});
+  const [viewerDragging, setViewerDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({x: 0, y: 0});
 
   const fetchData = () => {
     setLoading(true);
@@ -134,6 +143,35 @@ export default function OnProgressPage() {
   }, [selectedProduct, fetchResearch]);
 
   useEffect(() => { fetchData(); }, []);
+
+  // Fetch gallery images from Supabase for fullscreen viewer
+  const openFullscreenViewer = async (code: string, startIndex = 0) => {
+    try {
+      const SUPABASE_URL = 'https://vojohaceijgiotlnnkda.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvam9oYWNlaWpnaW90bG5ua2RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4NjQyNjgsImV4cCI6MjA5MzQ0MDI2OH0.bfPdCT_ht3NU9EYk7Ku43kvT6uL7sx0S3758Apg7ESI';
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/gallery_images?code=eq.${encodeURIComponent(code)}&order=created_at.asc&select=title,image_url`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setViewerImages(data.map((d: {title: string; image_url: string}) => ({ title: d.title, url: d.image_url })));
+        setViewerIndex(startIndex < data.length ? startIndex : 0);
+        setViewerScale(1);
+        setViewerPan({x: 0, y: 0});
+        setShowViewer(true);
+      }
+    } catch {
+      console.error('Failed to fetch gallery images');
+    }
+  };
+
+  const viewerResetZoom = () => { setViewerScale(1); setViewerPan({x: 0, y: 0}); };
+  const viewerNav = (dir: number) => {
+    const newIdx = (viewerIndex + dir + viewerImages.length) % viewerImages.length;
+    setViewerIndex(newIdx);
+    setViewerScale(1);
+    setViewerPan({x: 0, y: 0});
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -481,12 +519,21 @@ export default function OnProgressPage() {
                 </div>
                 
                 {/* Embedded Gallery iframe */}
-                <div className="w-full bg-gray-50 h-[280px]">
+                <div className="w-full bg-gray-50 h-[280px] relative">
                    <iframe 
                       src={`https://galerirndranuna.vercel.app/?embed=${selectedProduct.foto_produk_url}`}
                       className="w-full h-full border-0"
                       title="Galeri Produk"
                    />
+                   {/* Fullscreen button overlay */}
+                   <button
+                     onClick={() => openFullscreenViewer(selectedProduct.foto_produk_url)}
+                     className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-all shadow-lg border border-white/10"
+                     title="Lihat Fullscreen"
+                   >
+                     <Maximize2 className="w-3.5 h-3.5" />
+                     Fullscreen
+                   </button>
                 </div>
               </div>
             )}
@@ -709,7 +756,93 @@ export default function OnProgressPage() {
           </div>
         </div>
       )}
-      {/* Modal removed */}
+      {/* Fullscreen Image Viewer */}
+      {showViewer && viewerImages.length > 0 && (
+        <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col" onClick={() => setShowViewer(false)}>
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-5 py-3 text-white bg-black/50 backdrop-blur-sm border-b border-white/10" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-sm font-medium truncate max-w-[50vw]">{viewerImages[viewerIndex]?.title}</span>
+              <span className="text-xs font-mono bg-white/10 px-2 py-0.5 rounded">{Math.round(viewerScale * 100)}%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/50">{viewerIndex + 1} / {viewerImages.length}</span>
+              <button onClick={() => setShowViewer(false)} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Image area */}
+          <div
+            className="flex-1 flex items-center justify-center overflow-hidden relative cursor-grab active:cursor-grabbing"
+            onClick={e => e.stopPropagation()}
+            onWheel={e => {
+              e.preventDefault();
+              const factor = e.deltaY < 0 ? 1.08 : 1 / 1.08;
+              setViewerScale(s => Math.max(0.01, Math.min(20, s * factor)));
+            }}
+            onMouseDown={e => {
+              if (e.button !== 0) return;
+              setViewerDragging(true);
+              setDragStart({x: e.clientX - viewerPan.x, y: e.clientY - viewerPan.y});
+            }}
+            onMouseMove={e => {
+              if (!viewerDragging) return;
+              setViewerPan({x: e.clientX - dragStart.x, y: e.clientY - dragStart.y});
+            }}
+            onMouseUp={() => setViewerDragging(false)}
+            onMouseLeave={() => setViewerDragging(false)}
+            onDoubleClick={() => {
+              if (viewerScale > 1.05) { viewerResetZoom(); }
+              else { setViewerScale(3); }
+            }}
+          >
+            <img
+              src={viewerImages[viewerIndex]?.url}
+              alt={viewerImages[viewerIndex]?.title}
+              className="select-none"
+              draggable={false}
+              style={{
+                transform: `translate(${viewerPan.x}px, ${viewerPan.y}px) scale(${viewerScale})`,
+                transformOrigin: 'center center',
+                maxWidth: 'none',
+                maxHeight: 'none',
+                transition: viewerDragging ? 'none' : undefined,
+              }}
+            />
+
+            {/* Nav arrows */}
+            {viewerImages.length > 1 && (
+              <>
+                <button onClick={() => viewerNav(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-all shadow-lg backdrop-blur-sm">
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button onClick={() => viewerNav(1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white transition-all shadow-lg backdrop-blur-sm">
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom toolbar */}
+          <div className="flex items-center justify-center gap-2 px-5 py-3 bg-black/50 backdrop-blur-sm border-t border-white/10" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setViewerScale(s => Math.max(0.01, s / 1.3))} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
+              <ZoomOut className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewerScale(s => Math.min(20, s * 1.3))} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
+              <ZoomIn className="w-4 h-4" />
+            </button>
+            <div className="w-px h-6 bg-white/20 mx-1" />
+            <button onClick={viewerResetZoom} className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white text-xs font-medium transition-colors">
+              <RotateCcw className="w-3.5 h-3.5" />
+              Ukuran Asli
+            </button>
+            <div className="w-px h-6 bg-white/20 mx-1" />
+            <span className="text-white/40 text-xs hidden sm:inline">Scroll = Zoom · Drag = Geser · Klik 2x = Zoom</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
