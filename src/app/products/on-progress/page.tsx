@@ -801,13 +801,11 @@ export default function OnProgressPage() {
             <img
               src={viewerImages[viewerIndex]?.url}
               alt={viewerImages[viewerIndex]?.title}
-              className="select-none"
+              className="select-none max-w-full max-h-full object-contain"
               draggable={false}
               style={{
                 transform: `translate(${viewerPan.x}px, ${viewerPan.y}px) scale(${viewerScale})`,
                 transformOrigin: 'center center',
-                maxWidth: 'none',
-                maxHeight: 'none',
                 transition: viewerDragging ? 'none' : undefined,
               }}
             />
